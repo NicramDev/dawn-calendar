@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Plus, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -42,15 +42,22 @@ function MindMapCanvasInner() {
     deleteMap,
   } = useMindMap();
 
+  const updateNodeRef = useRef(updateNode);
+  const deleteNodeRef = useRef(deleteNode);
+  useEffect(() => {
+    updateNodeRef.current = updateNode;
+    deleteNodeRef.current = deleteNode;
+  }, [updateNode, deleteNode]);
+
   const nodeTypes = useMemo(() => ({
     mindMapNode: (props: NodeProps<MindMapNodeData>) => (
       <ReactFlowMindMapNode 
         {...props} 
-        onUpdate={updateNode}
-        onDelete={deleteNode}
+        onUpdate={(id, updates) => updateNodeRef.current(id, updates)}
+        onDelete={(id) => deleteNodeRef.current(id)}
       />
     ),
-  }), [updateNode, deleteNode]);
+  }), []);
   const handleCreateMap = () => {
     if (newMapName.trim()) {
       createNewMap(newMapName.trim());

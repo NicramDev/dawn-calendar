@@ -94,60 +94,86 @@ export function useMindMap() {
   }, [currentMapId, setMindMaps]);
 
   const onNodesChange = useCallback((changes: any) => {
-    const newNodes = applyNodeChanges(changes, nodes);
-    updateCurrentMap({ nodes: newNodes });
-  }, [nodes, updateCurrentMap]);
+    setMindMaps((prev: any[]) => prev.map((map: MindMap) =>
+      map.id === currentMapId
+        ? { ...map, nodes: applyNodeChanges(changes, map.nodes || []) }
+        : map
+    ));
+  }, [currentMapId, setMindMaps]);
 
   const onEdgesChange = useCallback((changes: any) => {
-    const newEdges = applyEdgeChanges(changes, edges);
-    updateCurrentMap({ edges: newEdges });
-  }, [edges, updateCurrentMap]);
+    setMindMaps((prev: any[]) => prev.map((map: MindMap) =>
+      map.id === currentMapId
+        ? { ...map, edges: applyEdgeChanges(changes, map.edges || []) }
+        : map
+    ));
+  }, [currentMapId, setMindMaps]);
 
   const onConnect = useCallback((connection: Connection) => {
-    const newEdges = addEdge({
-      ...connection,
-      type: 'smoothstep',
-      animated: true,
-      style: { stroke: 'rgba(139, 92, 246, 0.8)', strokeWidth: 3 }
-    }, edges);
-    updateCurrentMap({ edges: newEdges });
-  }, [edges, updateCurrentMap]);
+    setMindMaps((prev: any[]) => prev.map((map: MindMap) =>
+      map.id === currentMapId
+        ? {
+            ...map,
+            edges: addEdge(
+              {
+                ...connection,
+                type: 'smoothstep',
+                animated: true,
+                style: { stroke: 'rgba(139, 92, 246, 0.8)', strokeWidth: 3 },
+              },
+              map.edges || []
+            ),
+          }
+        : map
+    ));
+  }, [currentMapId, setMindMaps]);
 
   const addNode = useCallback((x: number, y: number) => {
     const selectedColor = localStorage.getItem('selectedNodeColor') || 'blue';
-    
+    const newId = crypto.randomUUID();
+
     const newNode: Node<MindMapNodeData> = {
-      id: crypto.randomUUID(),
+      id: newId,
       type: 'mindMapNode',
       position: { x, y },
       data: {
         title: 'Nowy węzeł',
         content: '',
-        color: selectedColor
-      }
+        color: selectedColor,
+      },
     };
 
-    updateCurrentMap({
-      nodes: [...nodes, newNode]
-    });
+    setMindMaps((prev: any[]) => prev.map((map: MindMap) =>
+      map.id === currentMapId ? { ...map, nodes: [...(map.nodes || []), newNode] } : map
+    ));
 
-    return newNode.id;
-  }, [nodes, updateCurrentMap]);
+    return newId;
+  }, [currentMapId, setMindMaps]);
 
   const updateNode = useCallback((id: string, updates: Partial<MindMapNodeData>) => {
-    const newNodes = nodes.map(node =>
-      node.id === id 
-        ? { ...node, data: { ...node.data, ...updates } }
-        : node
-    );
-    updateCurrentMap({ nodes: newNodes });
-  }, [nodes, updateCurrentMap]);
+    setMindMaps((prev: any[]) => prev.map((map: MindMap) =>
+      map.id === currentMapId
+        ? {
+            ...map,
+            nodes: (map.nodes || []).map((node) =>
+              node.id === id ? { ...node, data: { ...node.data, ...updates } } : node
+            ),
+          }
+        : map
+    ));
+  }, [currentMapId, setMindMaps]);
 
   const deleteNode = useCallback((id: string) => {
-    const newNodes = nodes.filter(node => node.id !== id);
-    const newEdges = edges.filter(edge => edge.source !== id && edge.target !== id);
-    updateCurrentMap({ nodes: newNodes, edges: newEdges });
-  }, [nodes, edges, updateCurrentMap]);
+    setMindMaps((prev: any[]) => prev.map((map: MindMap) =>
+      map.id === currentMapId
+        ? {
+            ...map,
+            nodes: (map.nodes || []).filter((node) => node.id !== id),
+            edges: (map.edges || []).filter((edge) => edge.source !== id && edge.target !== id),
+          }
+        : map
+    ));
+  }, [currentMapId, setMindMaps]);
 
   const createNewMap = useCallback((name: string) => {
     const newMap: MindMap = {
