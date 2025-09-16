@@ -54,6 +54,10 @@ const Index = () => {
     setSelectedDate(undefined);
   };
 
+  const handleMoveEvent = (eventId: string, newDate: Date) => {
+    updateEvent(eventId, { plannedDate: newDate });
+  };
+
   return (
     <div className="min-h-screen bg-gradient-subtle">
       <motion.div 
@@ -123,6 +127,7 @@ const Index = () => {
               events={events}
               onEventClick={handleEventClick}
               onAddEvent={handleAddEvent}
+              onMoveEvent={handleMoveEvent}
             />
           </motion.div>
         </div>

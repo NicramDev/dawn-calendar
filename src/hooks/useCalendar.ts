@@ -31,8 +31,10 @@ export const useCalendar = () => {
         const parsed = JSON.parse(stored);
         const hasInvalidDates = parsed.some((event: any) => {
           try {
-            const date = new Date(event.date || event.startTime);
-            return isNaN(date.getTime());
+            // Check for old single date field or new dual date fields
+            const dueDate = new Date(event.dueDate || event.date);
+            const plannedDate = new Date(event.plannedDate || event.date);
+            return isNaN(dueDate.getTime()) || isNaN(plannedDate.getTime());
           } catch {
             return true;
           }
@@ -60,16 +62,43 @@ export const useCalendar = () => {
   const parsedEvents = useMemo(() => {
     return events.map(event => {
       try {
-        const date = new Date(event.date);
-        // Check if date is valid
-        if (isNaN(date.getTime())) {
-          console.warn('Invalid date found, using current date:', event);
-          return { ...event, date: new Date() };
+        // Handle migration from old single 'date' field to new dueDate/plannedDate structure
+        const legacyEvent = event as any;
+        if (legacyEvent.date && !event.dueDate) {
+          return {
+            id: event.id,
+            title: event.title,
+            description: event.description,
+            color: event.color,
+            dueDate: new Date(legacyEvent.date),
+            plannedDate: new Date(legacyEvent.date)
+          };
         }
-        return { ...event, date };
+        
+        const dueDate = new Date(event.dueDate);
+        const plannedDate = new Date(event.plannedDate);
+        
+        // Check if dates are valid
+        if (isNaN(dueDate.getTime()) || isNaN(plannedDate.getTime())) {
+          console.warn('Invalid dates found, using current date:', event);
+          return { 
+            ...event, 
+            dueDate: new Date(),
+            plannedDate: new Date()
+          };
+        }
+        return { 
+          ...event, 
+          dueDate,
+          plannedDate
+        };
       } catch (error) {
-        console.warn('Error parsing date, using current date:', event, error);
-        return { ...event, date: new Date() };
+        console.warn('Error parsing dates, using current date:', event, error);
+        return { 
+          ...event, 
+          dueDate: new Date(),
+          plannedDate: new Date()
+        };
       }
     });
   }, [events]);
@@ -99,7 +128,7 @@ export const useCalendar = () => {
         : endOfDay(currentDate);
 
     return filteredEvents.filter(event => {
-      const eventDate = startOfDay(event.date);
+      const eventDate = startOfDay(event.plannedDate);
       return eventDate >= start && eventDate <= end;
     });
   }, [filteredEvents, currentDate, view]);
@@ -136,7 +165,7 @@ export const useCalendar = () => {
 
   const getEventsForDay = (date: Date) => {
     return filteredEvents.filter(event => 
-      isSameDay(event.date, date)
+      isSameDay(event.plannedDate, date)
     );
   };
 

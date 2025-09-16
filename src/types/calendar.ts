@@ -2,7 +2,8 @@ export interface CalendarEvent {
   id: string;
   title: string;
   description?: string;
-  date: Date;
+  dueDate: Date; // Na kiedy jest
+  plannedDate: Date; // Kiedy zamierzam zrobić
   color: EventColor;
 }
 

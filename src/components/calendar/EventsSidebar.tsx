@@ -1,17 +1,20 @@
 import { CalendarEvent } from '@/types/calendar';
 import { eventColors } from '@/hooks/useCalendar';
-import { format, isToday, isTomorrow, isYesterday } from 'date-fns';
+import { format, isToday, isTomorrow, isYesterday, isSameDay } from 'date-fns';
 import { pl } from 'date-fns/locale';
 import { motion } from 'framer-motion';
-import { Plus } from 'lucide-react';
+import { Plus, MoveRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
 
 interface EventsSidebarProps {
   events: CalendarEvent[];
   onEventClick: (event: CalendarEvent) => void;
   onAddEvent: () => void;
+  onMoveEvent: (eventId: string, newDate: Date) => void;
   className?: string;
 }
 
@@ -19,6 +22,7 @@ export const EventsSidebar = ({
   events,
   onEventClick,
   onAddEvent,
+  onMoveEvent,
   className
 }: EventsSidebarProps) => {
   const formatEventDate = (date: Date) => {
@@ -42,19 +46,19 @@ export const EventsSidebar = ({
     
     events.forEach(event => {
       try {
-        // Ensure we have a valid date
-        if (!event.date || isNaN(new Date(event.date).getTime())) {
-          console.warn('Skipping event with invalid date:', event);
+        // Ensure we have a valid due date
+        if (!event.dueDate || isNaN(new Date(event.dueDate).getTime())) {
+          console.warn('Skipping event with invalid due date:', event);
           return;
         }
         
-        const dateKey = format(event.date, 'yyyy-MM-dd');
+        const dateKey = format(event.dueDate, 'yyyy-MM-dd');
         if (!groups[dateKey]) {
           groups[dateKey] = [];
         }
         groups[dateKey].push(event);
       } catch (error) {
-        console.warn('Error processing event date:', event, error);
+        console.warn('Error processing event due date:', event, error);
       }
     });
 
@@ -121,7 +125,7 @@ export const EventsSidebar = ({
                 >
                   {/* Date header */}
                   <div className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
-                    {formatEventDate(firstEvent.date)}
+                    {formatEventDate(firstEvent.dueDate)}
                   </div>
                   
                   {/* Events for this date */}
@@ -144,20 +148,58 @@ export const EventsSidebar = ({
                           transition={{ duration: 0.2, delay: eventIndex * 0.05 }}
                           whileHover={{ y: -2 }}
                         >
-                          <div className="flex items-start gap-3">
-                            <div className={cn("w-3 h-3 rounded-full mt-1 flex-shrink-0", colors.text.replace('text-', 'bg-'))} />
-                            
-                            <div className="flex-1 min-w-0">
-                              <div className={cn("font-medium text-sm truncate", colors.text)}>
-                                {event.title}
-                              </div>
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="flex items-start gap-3 flex-1">
+                              <div className={cn("w-3 h-3 rounded-full mt-1 flex-shrink-0", colors.text.replace('text-', 'bg-'))} />
                               
-                              {event.description && (
-                                <div className="text-xs text-muted-foreground mt-1 truncate">
-                                  {event.description}
+                              <div className="flex-1 min-w-0">
+                                <div className={cn("font-medium text-sm truncate", colors.text)}>
+                                  {event.title}
                                 </div>
-                              )}
+                                
+                                <div className="text-xs text-muted-foreground mt-1">
+                                  Na kiedy: {formatEventDate(event.dueDate)}
+                                </div>
+                                
+                                {!isSameDay(event.plannedDate, event.dueDate) && (
+                                  <div className="text-xs text-muted-foreground">
+                                    Planuję: {formatEventDate(event.plannedDate)}
+                                  </div>
+                                )}
+                                
+                                {event.description && (
+                                  <div className="text-xs text-muted-foreground mt-1 truncate">
+                                    {event.description}
+                                  </div>
+                                )}
+                              </div>
                             </div>
+                            
+                            <Popover>
+                              <PopoverTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-8 w-8 p-0 hover:bg-background/50"
+                                  onClick={(e) => e.stopPropagation()}
+                                >
+                                  <MoveRight className="h-4 w-4" />
+                                </Button>
+                              </PopoverTrigger>
+                              <PopoverContent className="w-auto p-0 border-border bg-background">
+                                <Calendar
+                                  mode="single"
+                                  selected={event.plannedDate}
+                                  onSelect={(newDate) => {
+                                    if (newDate) {
+                                      onMoveEvent(event.id, newDate);
+                                    }
+                                  }}
+                                  initialFocus
+                                  className="p-3"
+                                />
+                              </PopoverContent>
+                            </Popover>
                           </div>
                         </motion.div>
                       );

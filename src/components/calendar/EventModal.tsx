@@ -35,7 +35,8 @@ export const EventModal = ({
 }: EventModalProps) => {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [date, setDate] = useState<Date>();
+  const [dueDate, setDueDate] = useState<Date>();
+  const [plannedDate, setPlannedDate] = useState<Date>();
   const [color, setColor] = useState<EventColor>('blue');
 
   const isEditing = !!event;
@@ -44,23 +45,26 @@ export const EventModal = ({
     if (event) {
       setTitle(event.title);
       setDescription(event.description || '');
-      setDate(event.date);
+      setDueDate(event.dueDate);
+      setPlannedDate(event.plannedDate);
       setColor(event.color);
     } else {
       setTitle('');
       setDescription('');
-      setDate(selectedDate || new Date());
+      setDueDate(selectedDate || new Date());
+      setPlannedDate(selectedDate || new Date());
       setColor('blue');
     }
   }, [event, selectedDate]);
 
   const handleSave = () => {
-    if (!title.trim() || !date) return;
+    if (!title.trim() || !dueDate || !plannedDate) return;
 
     const eventData = {
       title: title.trim(),
       description: description.trim(),
-      date: date,
+      dueDate: dueDate,
+      plannedDate: plannedDate,
       color
     };
 
@@ -121,27 +125,55 @@ export const EventModal = ({
             />
           </div>
 
-          {/* Date */}
+          {/* Due Date - Na kiedy jest */}
           <div className="space-y-2">
-            <Label className="text-foreground">Data</Label>
+            <Label className="text-foreground">Na kiedy jest</Label>
             <Popover>
               <PopoverTrigger asChild>
                 <Button
                   variant="outline"
                   className={cn(
                     "w-full justify-start text-left font-normal border-border bg-background",
-                    !date && "text-muted-foreground"
+                    !dueDate && "text-muted-foreground"
                   )}
                 >
                   <CalendarIcon className="mr-2 h-4 w-4" />
-                  {date ? format(date, 'PPP', { locale: pl }) : 'Wybierz datę'}
+                  {dueDate ? format(dueDate, 'PPP', { locale: pl }) : 'Wybierz datę'}
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0 border-border bg-background">
                 <Calendar
                   mode="single"
-                  selected={date}
-                  onSelect={setDate}
+                  selected={dueDate}
+                  onSelect={setDueDate}
+                  initialFocus
+                  className="p-3 pointer-events-auto"
+                />
+              </PopoverContent>
+            </Popover>
+          </div>
+
+          {/* Planned Date - Kiedy zamierzam zrobić */}
+          <div className="space-y-2">
+            <Label className="text-foreground">Kiedy zamierzam zrobić</Label>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className={cn(
+                    "w-full justify-start text-left font-normal border-border bg-background",
+                    !plannedDate && "text-muted-foreground"
+                  )}
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {plannedDate ? format(plannedDate, 'PPP', { locale: pl }) : 'Wybierz datę'}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0 border-border bg-background">
+                <Calendar
+                  mode="single"
+                  selected={plannedDate}
+                  onSelect={setPlannedDate}
                   initialFocus
                   className="p-3 pointer-events-auto"
                 />
@@ -188,7 +220,7 @@ export const EventModal = ({
           <div className="flex gap-2 pt-4">
             <Button 
               onClick={handleSave} 
-              disabled={!title.trim() || !date}
+              disabled={!title.trim() || !dueDate || !plannedDate}
               className="flex-1 bg-gradient-primary hover:opacity-90"
             >
               {isEditing ? 'Zapisz zmiany' : 'Dodaj zadanie'}
