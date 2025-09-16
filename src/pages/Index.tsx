@@ -56,6 +56,8 @@ const Index = () => {
 
   const handleMoveEvent = (eventId: string, newDate: Date) => {
     updateEvent(eventId, { plannedDate: newDate });
+    // Optional: Add toast notification for better user feedback
+    console.log(`Moved task to ${newDate.toDateString()}`);
   };
 
   return (

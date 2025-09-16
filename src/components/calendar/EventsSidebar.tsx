@@ -186,13 +186,20 @@ export const EventsSidebar = ({
                                   <MoveRight className="h-4 w-4" />
                                 </Button>
                               </PopoverTrigger>
-                              <PopoverContent className="w-auto p-0 border-border bg-background">
+                              <PopoverContent className="w-auto p-0 border-border bg-background" align="end">
+                                <div className="p-3 text-sm font-medium border-b border-border">
+                                  Przenieś na:
+                                </div>
                                 <Calendar
                                   mode="single"
                                   selected={event.plannedDate}
                                   onSelect={(newDate) => {
                                     if (newDate) {
                                       onMoveEvent(event.id, newDate);
+                                      // Force close popover by clicking outside
+                                      setTimeout(() => {
+                                        document.body.click();
+                                      }, 100);
                                     }
                                   }}
                                   initialFocus
