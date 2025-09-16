@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react';
 import { motion, PanInfo } from 'framer-motion';
-import { Edit3, Trash2, Link, X } from 'lucide-react';
+import { Edit3, Trash2, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -11,6 +11,7 @@ interface MindMapNodeProps {
   node: MindMapNodeType;
   isSelected: boolean;
   isConnecting: boolean;
+  connectingFrom: string | null;
   onUpdate: (id: string, updates: Partial<MindMapNodeType>) => void;
   onDelete: (id: string) => void;
   onMove: (id: string, x: number, y: number) => void;
@@ -25,13 +26,13 @@ const nodeColors = {
   green: 'bg-green-500/90 border-green-400 text-white',
   orange: 'bg-orange-500/90 border-orange-400 text-white',
   pink: 'bg-pink-500/90 border-pink-400 text-white',
-  yellow: 'bg-yellow-500/90 border-yellow-400 text-black',
 };
 
 export function MindMapNode({
   node,
   isSelected,
   isConnecting,
+  connectingFrom,
   onUpdate,
   onDelete,
   onMove,
@@ -42,6 +43,7 @@ export function MindMapNode({
   const [isEditing, setIsEditing] = useState(false);
   const [title, setTitle] = useState(node.title);
   const [content, setContent] = useState(node.content);
+  const [isDraggingConnection, setIsDraggingConnection] = useState(false);
   const nodeRef = useRef<HTMLDivElement>(null);
 
   const handleDragEnd = (event: any, info: PanInfo) => {
@@ -67,6 +69,16 @@ export function MindMapNode({
     } else {
       onSelect(node.id);
     }
+  };
+
+  const handleConnectionDragStart = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setIsDraggingConnection(true);
+    onStartConnecting(node.id);
+  };
+
+  const handleConnectionDragEnd = () => {
+    setIsDraggingConnection(false);
   };
 
   return (
@@ -112,6 +124,27 @@ export function MindMapNode({
         delay: Math.random() * 0.2 
       }}
     >
+      {/* Connection Handle */}
+      <motion.div
+        className={`
+          absolute -right-2 top-1/2 -translate-y-1/2 w-4 h-4 
+          bg-white border-2 border-current rounded-full cursor-crosshair
+          shadow-lg transition-all hover:scale-110
+          ${isConnecting && connectingFrom !== node.id ? 'ring-2 ring-white/50' : ''}
+          ${isDraggingConnection ? 'scale-125 ring-2 ring-white/50' : ''}
+        `}
+        onMouseDown={handleConnectionDragStart}
+        onMouseUp={handleConnectionDragEnd}
+        whileHover={{ scale: 1.1 }}
+        whileTap={{ scale: 1.2 }}
+        initial={{ opacity: 0, scale: 0 }}
+        animate={{ 
+          opacity: isSelected || isConnecting ? 1 : 0.7,
+          scale: isSelected || isConnecting ? 1 : 0.8
+        }}
+        transition={{ type: "spring", stiffness: 300, damping: 20 }}
+      />
+
       <div className="h-full flex flex-col p-3">
         {isEditing ? (
           <div className="flex flex-col h-full space-y-2">
@@ -167,17 +200,6 @@ export function MindMapNode({
                     className="h-6 w-6 p-0 hover:bg-white/20 text-inherit"
                   >
                     <Edit3 className="h-3 w-3" />
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onStartConnecting(node.id);
-                    }}
-                    className="h-6 w-6 p-0 hover:bg-white/20 text-inherit"
-                  >
-                    <Link className="h-3 w-3" />
                   </Button>
                 </div>
                 <Button

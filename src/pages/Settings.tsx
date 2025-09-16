@@ -4,8 +4,18 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Trash2, Download, Upload } from 'lucide-react';
+import { useLocalStorage } from '@/hooks/useLocalStorage';
+
+const nodeColors = [
+  { name: 'Niebieski', value: 'blue', color: 'bg-blue-500' },
+  { name: 'Fioletowy', value: 'purple', color: 'bg-purple-500' },
+  { name: 'Zielony', value: 'green', color: 'bg-green-500' },
+  { name: 'Pomarańczowy', value: 'orange', color: 'bg-orange-500' },
+  { name: 'Różowy', value: 'pink', color: 'bg-pink-500' },
+];
 
 export function Settings() {
+  const [selectedNodeColor, setSelectedNodeColor] = useLocalStorage('selectedNodeColor', 'blue');
   const handleExportData = () => {
     const data = {
       events: localStorage.getItem('calendar-events') || '[]',
@@ -76,6 +86,30 @@ export function Settings() {
             <div className="flex items-center justify-between">
               <Label htmlFor="animations">Animacje</Label>
               <Switch id="animations" defaultChecked />
+            </div>
+            
+            <div className="space-y-3">
+              <Label>Kolor domyślny węzłów</Label>
+              <div className="grid grid-cols-5 gap-2">
+                {nodeColors.map((color) => (
+                  <button
+                    key={color.value}
+                    onClick={() => setSelectedNodeColor(color.value)}
+                    className={`
+                      aspect-square rounded-lg border-2 transition-all hover:scale-105
+                      ${color.color} 
+                      ${selectedNodeColor === color.value 
+                        ? 'border-white ring-2 ring-white/50' 
+                        : 'border-white/30'
+                      }
+                    `}
+                    title={color.name}
+                  />
+                ))}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Wybierz domyślny kolor dla nowych węzłów w mapie myśli
+              </p>
             </div>
           </CardContent>
         </Card>

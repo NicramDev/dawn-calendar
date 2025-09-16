@@ -105,8 +105,7 @@ export function useMindMap() {
   }, [currentData, addConnection]);
 
   const addNode = useCallback((x: number, y: number) => {
-    const colors = ['blue', 'purple', 'green', 'orange', 'pink', 'yellow'];
-    const randomColor = colors[Math.floor(Math.random() * colors.length)];
+    const selectedColor = localStorage.getItem('selectedNodeColor') || 'blue';
     
     const newNode: MindMapNode = {
       id: crypto.randomUUID(),
@@ -116,7 +115,7 @@ export function useMindMap() {
       y,
       width: 200,
       height: 100,
-      color: randomColor
+      color: selectedColor
     };
 
     updateCurrentMap({

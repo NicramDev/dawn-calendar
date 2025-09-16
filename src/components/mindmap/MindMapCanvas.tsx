@@ -80,6 +80,27 @@ export function MindMapCanvas() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [selectedNode, isConnecting, deleteNode, setSelectedNode, endConnecting]);
 
+  // Calculate connection points from edge to edge
+  const getConnectionPoint = (fromNode: any, toNode: any) => {
+    const fromCenterX = fromNode.x + fromNode.width / 2;
+    const fromCenterY = fromNode.y + fromNode.height / 2;
+    const toCenterX = toNode.x + toNode.width / 2;
+    const toCenterY = toNode.y + toNode.height / 2;
+
+    // Calculate angle between nodes
+    const angle = Math.atan2(toCenterY - fromCenterY, toCenterX - fromCenterX);
+    
+    // From point (right edge of fromNode)
+    const fromX = fromNode.x + fromNode.width;
+    const fromY = fromCenterY;
+    
+    // To point (left edge of toNode)
+    const toX = toNode.x;
+    const toY = toCenterY;
+
+    return { fromX, fromY, toX, toY };
+  };
+
   // Render connections as SVG lines
   const renderConnections = () => {
     return connections.map(connection => {
@@ -88,24 +109,31 @@ export function MindMapCanvas() {
       
       if (!fromNode || !toNode) return null;
 
-      const fromX = fromNode.x + fromNode.width / 2;
-      const fromY = fromNode.y + fromNode.height / 2;
-      const toX = toNode.x + toNode.width / 2;
-      const toY = toNode.y + toNode.height / 2;
+      const { fromX, fromY, toX, toY } = getConnectionPoint(fromNode, toNode);
+
+      // Create curved path for smoother connections
+      const controlX1 = fromX + (toX - fromX) * 0.5;
+      const controlY1 = fromY;
+      const controlX2 = fromX + (toX - fromX) * 0.5;
+      const controlY2 = toY;
+
+      const pathData = `M ${fromX} ${fromY} C ${controlX1} ${controlY1}, ${controlX2} ${controlY2}, ${toX} ${toY}`;
 
       return (
-        <motion.line
+        <motion.path
           key={connection.id}
-          x1={fromX}
-          y1={fromY}
-          x2={toX}
-          y2={toY}
-          stroke="rgba(139, 92, 246, 0.6)"
-          strokeWidth="2"
+          d={pathData}
+          stroke="rgba(139, 92, 246, 0.7)"
+          strokeWidth="3"
           strokeLinecap="round"
+          fill="none"
           initial={{ pathLength: 0, opacity: 0 }}
           animate={{ pathLength: 1, opacity: 1 }}
-          transition={{ duration: 0.5 }}
+          transition={{ 
+            duration: 0.8,
+            ease: "easeInOut"
+          }}
+          filter="drop-shadow(0 2px 4px rgba(139, 92, 246, 0.3))"
         />
       );
     });
@@ -147,6 +175,7 @@ export function MindMapCanvas() {
             node={node}
             isSelected={selectedNode === node.id}
             isConnecting={isConnecting}
+            connectingFrom={connectingFrom}
             onUpdate={updateNode}
             onDelete={deleteNode}
             onMove={moveNode}
