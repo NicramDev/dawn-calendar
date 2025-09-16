@@ -22,6 +22,7 @@ export default {
         primary: {
           DEFAULT: "hsl(var(--primary))",
           foreground: "hsl(var(--primary-foreground))",
+          soft: "hsl(var(--primary-soft))",
         },
         secondary: {
           DEFAULT: "hsl(var(--secondary))",
@@ -47,6 +48,24 @@ export default {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+        calendar: {
+          today: "hsl(var(--calendar-today))",
+          "today-bg": "hsl(var(--calendar-today-bg))",
+        },
+        event: {
+          blue: "hsl(var(--event-blue))",
+          "blue-bg": "hsl(var(--event-blue-bg))",
+          pink: "hsl(var(--event-pink))",
+          "pink-bg": "hsl(var(--event-pink-bg))",
+          green: "hsl(var(--event-green))",
+          "green-bg": "hsl(var(--event-green-bg))",
+          purple: "hsl(var(--event-purple))",
+          "purple-bg": "hsl(var(--event-purple-bg))",
+          orange: "hsl(var(--event-orange))",
+          "orange-bg": "hsl(var(--event-orange-bg))",
+          yellow: "hsl(var(--event-yellow))",
+          "yellow-bg": "hsl(var(--event-yellow-bg))",
+        },
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
           foreground: "hsl(var(--sidebar-foreground))",
@@ -62,6 +81,17 @@ export default {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
+      },
+      backgroundImage: {
+        "gradient-primary": "var(--gradient-primary)",
+        "gradient-subtle": "var(--gradient-subtle)",
+        "gradient-card": "var(--gradient-card)",
+      },
+      boxShadow: {
+        sm: "var(--shadow-sm)",
+        md: "var(--shadow-md)",
+        lg: "var(--shadow-lg)",
+        event: "var(--shadow-event)",
       },
       keyframes: {
         "accordion-down": {
