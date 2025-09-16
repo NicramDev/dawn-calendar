@@ -55,30 +55,61 @@ function ReactFlowMindMapNode({ id, data, selected, onUpdate, onDelete, isConnec
         delay: Math.random() * 0.2 
       }}
     >
-      {/* Connection Handles - simplified, one per side */}
+      {/* Connection Handles - fixed position, no hover movement */}
+      {/* Top handles */}
       <Handle
         type="source"
         position={Position.Top}
-        id="top"
-        className="!w-4 !h-4 !bg-white !border-2 !border-current hover:scale-110 transition-transform"
+        id="top-source"
+        className="!w-4 !h-4 !bg-white !border-2 !border-current"
       />
+      <Handle
+        type="target"
+        position={Position.Top}
+        id="top-target"
+        className="!w-4 !h-4 !bg-white !border-2 !border-current"
+      />
+      
+      {/* Right handles */}
       <Handle
         type="source"
         position={Position.Right}
-        id="right"
-        className="!w-4 !h-4 !bg-white !border-2 !border-current hover:scale-110 transition-transform"
+        id="right-source"
+        className="!w-4 !h-4 !bg-white !border-2 !border-current"
       />
+      <Handle
+        type="target"
+        position={Position.Right}
+        id="right-target"
+        className="!w-4 !h-4 !bg-white !border-2 !border-current"
+      />
+      
+      {/* Bottom handles */}
       <Handle
         type="source"
         position={Position.Bottom}
-        id="bottom"
-        className="!w-4 !h-4 !bg-white !border-2 !border-current hover:scale-110 transition-transform"
+        id="bottom-source"
+        className="!w-4 !h-4 !bg-white !border-2 !border-current"
       />
+      <Handle
+        type="target"
+        position={Position.Bottom}
+        id="bottom-target"
+        className="!w-4 !h-4 !bg-white !border-2 !border-current"
+      />
+      
+      {/* Left handles */}
       <Handle
         type="source"
         position={Position.Left}
-        id="left"
-        className="!w-4 !h-4 !bg-white !border-2 !border-current hover:scale-110 transition-transform"
+        id="left-source"
+        className="!w-4 !h-4 !bg-white !border-2 !border-current"
+      />
+      <Handle
+        type="target"
+        position={Position.Left}
+        id="left-target"
+        className="!w-4 !h-4 !bg-white !border-2 !border-current"
       />
 
       <div className="p-3 flex flex-col h-full">
