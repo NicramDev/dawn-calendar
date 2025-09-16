@@ -27,8 +27,7 @@ export const useCalendar = () => {
   const parsedEvents = useMemo(() => {
     return events.map(event => ({
       ...event,
-      startTime: new Date(event.startTime),
-      endTime: new Date(event.endTime)
+      date: new Date(event.date)
     }));
   }, [events]);
 
@@ -57,8 +56,8 @@ export const useCalendar = () => {
         : endOfDay(currentDate);
 
     return filteredEvents.filter(event => {
-      const eventStart = startOfDay(event.startTime);
-      return eventStart >= start && eventStart <= end;
+      const eventDate = startOfDay(event.date);
+      return eventDate >= start && eventDate <= end;
     });
   }, [filteredEvents, currentDate, view]);
 
@@ -94,7 +93,7 @@ export const useCalendar = () => {
 
   const getEventsForDay = (date: Date) => {
     return filteredEvents.filter(event => 
-      isSameDay(event.startTime, date)
+      isSameDay(event.date, date)
     );
   };
 

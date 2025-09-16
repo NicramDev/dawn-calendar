@@ -5,12 +5,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { format } from 'date-fns';
 import { pl } from 'date-fns/locale';
-import { CalendarIcon, Clock, Palette, Trash2 } from 'lucide-react';
+import { CalendarIcon, Palette, Trash2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { eventColors } from '@/hooks/useCalendar';
@@ -37,10 +36,7 @@ export const EventModal = ({
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [date, setDate] = useState<Date>();
-  const [startTime, setStartTime] = useState('09:00');
-  const [endTime, setEndTime] = useState('10:00');
   const [color, setColor] = useState<EventColor>('blue');
-  const [reminder, setReminder] = useState<number>(15);
 
   const isEditing = !!event;
 
@@ -48,41 +44,24 @@ export const EventModal = ({
     if (event) {
       setTitle(event.title);
       setDescription(event.description || '');
-      setDate(event.startTime);
-      setStartTime(format(event.startTime, 'HH:mm'));
-      setEndTime(format(event.endTime, 'HH:mm'));
+      setDate(event.date);
       setColor(event.color);
-      setReminder(event.reminder || 15);
     } else {
       setTitle('');
       setDescription('');
       setDate(selectedDate || new Date());
-      setStartTime('09:00');
-      setEndTime('10:00');
       setColor('blue');
-      setReminder(15);
     }
   }, [event, selectedDate]);
 
   const handleSave = () => {
     if (!title.trim() || !date) return;
 
-    const [startHour, startMin] = startTime.split(':').map(Number);
-    const [endHour, endMin] = endTime.split(':').map(Number);
-
-    const startDateTime = new Date(date);
-    startDateTime.setHours(startHour, startMin, 0, 0);
-
-    const endDateTime = new Date(date);
-    endDateTime.setHours(endHour, endMin, 0, 0);
-
     const eventData = {
       title: title.trim(),
       description: description.trim(),
-      startTime: startDateTime,
-      endTime: endDateTime,
-      color,
-      reminder
+      date: date,
+      color
     };
 
     if (isEditing && event && onUpdate) {
@@ -107,7 +86,7 @@ export const EventModal = ({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-foreground">
             <CalendarIcon className="h-5 w-5 text-primary" />
-            {isEditing ? 'Edytuj wydarzenie' : 'Nowe wydarzenie'}
+            {isEditing ? 'Edytuj zadanie' : 'Nowe zadanie'}
           </DialogTitle>
         </DialogHeader>
 
@@ -124,7 +103,7 @@ export const EventModal = ({
               id="title"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="Nazwa wydarzenia"
+              placeholder="Nazwa zadania"
               className="border-border bg-background"
             />
           </div>
@@ -170,78 +149,38 @@ export const EventModal = ({
             </Popover>
           </div>
 
-          {/* Time */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="startTime" className="text-foreground flex items-center gap-1">
-                <Clock className="h-4 w-4" />
-                Początek
-              </Label>
-              <Input
-                id="startTime"
-                type="time"
-                value={startTime}
-                onChange={(e) => setStartTime(e.target.value)}
-                className="border-border bg-background"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="endTime" className="text-foreground flex items-center gap-1">
-                <Clock className="h-4 w-4" />
-                Koniec
-              </Label>
-              <Input
-                id="endTime"
-                type="time"
-                value={endTime}
-                onChange={(e) => setEndTime(e.target.value)}
-                className="border-border bg-background"
-              />
-            </div>
-          </div>
-
-          {/* Color and Reminder */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label className="text-foreground flex items-center gap-1">
-                <Palette className="h-4 w-4" />
-                Kolor
-              </Label>
-              <div className="flex gap-2 flex-wrap">
-                {(Object.keys(eventColors) as EventColor[]).map((colorOption) => {
-                  const colors = eventColors[colorOption];
-                  return (
-                    <motion.button
-                      key={colorOption}
-                      type="button"
-                      onClick={() => setColor(colorOption)}
-                      className={cn(
-                        "w-8 h-8 rounded-full border-2 transition-all",
-                        colors.bg.replace('bg-', 'bg-').replace('-bg', ''),
-                        color === colorOption ? 'border-foreground scale-110' : 'border-border hover:scale-105'
-                      )}
-                      whileHover={{ scale: 1.1 }}
-                      whileTap={{ scale: 0.95 }}
-                    />
-                  );
-                })}
-              </div>
-            </div>
-            
-            <div className="space-y-2">
-              <Label className="text-foreground">Przypomnienie</Label>
-              <Select value={reminder.toString()} onValueChange={(value) => setReminder(Number(value))}>
-                <SelectTrigger className="border-border bg-background">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="border-border bg-background">
-                  <SelectItem value="0">Bez przypomnienia</SelectItem>
-                  <SelectItem value="5">5 minut wcześniej</SelectItem>
-                  <SelectItem value="15">15 minut wcześniej</SelectItem>
-                  <SelectItem value="30">30 minut wcześniej</SelectItem>
-                  <SelectItem value="60">1 godzinę wcześniej</SelectItem>
-                </SelectContent>
-              </Select>
+          {/* Color */}
+          <div className="space-y-2">
+            <Label className="text-foreground flex items-center gap-1">
+              <Palette className="h-4 w-4" />
+              Kolor
+            </Label>
+            <div className="flex gap-3 flex-wrap">
+              {(Object.keys(eventColors) as EventColor[]).map((colorOption) => {
+                const colorMap = {
+                  blue: 'bg-blue-400',
+                  pink: 'bg-pink-400', 
+                  green: 'bg-green-400',
+                  purple: 'bg-purple-400',
+                  orange: 'bg-orange-400',
+                  yellow: 'bg-yellow-400'
+                };
+                
+                return (
+                  <motion.button
+                    key={colorOption}
+                    type="button"
+                    onClick={() => setColor(colorOption)}
+                    className={cn(
+                      "w-10 h-10 rounded-full border-2 transition-all",
+                      colorMap[colorOption],
+                      color === colorOption ? 'border-foreground scale-110 ring-2 ring-offset-2 ring-primary' : 'border-border hover:scale-105'
+                    )}
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.95 }}
+                  />
+                );
+              })}
             </div>
           </div>
 
@@ -252,7 +191,7 @@ export const EventModal = ({
               disabled={!title.trim() || !date}
               className="flex-1 bg-gradient-primary hover:opacity-90"
             >
-              {isEditing ? 'Zapisz zmiany' : 'Dodaj wydarzenie'}
+              {isEditing ? 'Zapisz zmiany' : 'Dodaj zadanie'}
             </Button>
             
             {isEditing && (

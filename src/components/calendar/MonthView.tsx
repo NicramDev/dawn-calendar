@@ -23,7 +23,7 @@ export const MonthView = ({
   const weekDays = ['Pon', 'Wt', 'Śr', 'Czw', 'Pt', 'Sob', 'Ndz'];
 
   const getEventsForDay = (date: Date) => {
-    return events.filter(event => isSameDay(event.startTime, date));
+    return events.filter(event => isSameDay(event.date, date));
   };
 
   return (

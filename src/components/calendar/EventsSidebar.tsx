@@ -3,7 +3,7 @@ import { eventColors } from '@/hooks/useCalendar';
 import { format, isToday, isTomorrow, isYesterday } from 'date-fns';
 import { pl } from 'date-fns/locale';
 import { motion } from 'framer-motion';
-import { Clock, Plus } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
@@ -32,16 +32,16 @@ export const EventsSidebar = ({
     const groups: { [key: string]: CalendarEvent[] } = {};
     
     events.forEach(event => {
-      const dateKey = format(event.startTime, 'yyyy-MM-dd');
+      const dateKey = format(event.date, 'yyyy-MM-dd');
       if (!groups[dateKey]) {
         groups[dateKey] = [];
       }
       groups[dateKey].push(event);
     });
 
-    // Sort events within each group by start time
+    // Sort events within each group by title
     Object.keys(groups).forEach(key => {
-      groups[key].sort((a, b) => a.startTime.getTime() - b.startTime.getTime());
+      groups[key].sort((a, b) => a.title.localeCompare(b.title));
     });
 
     return groups;
@@ -55,7 +55,7 @@ export const EventsSidebar = ({
       {/* Header */}
       <div className="p-4 border-b border-border">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-foreground">Wydarzenia</h2>
+          <h2 className="text-lg font-semibold text-foreground">Zadania</h2>
           <Button
             onClick={onAddEvent}
             size="sm"
@@ -67,7 +67,7 @@ export const EventsSidebar = ({
         </div>
         
         <div className="text-sm text-muted-foreground">
-          {events.length === 0 ? 'Brak wydarzeń' : `${events.length} wydarzeń`}
+          {events.length === 0 ? 'Brak zadań' : `${events.length} zadań`}
         </div>
       </div>
 
@@ -82,7 +82,7 @@ export const EventsSidebar = ({
               transition={{ duration: 0.3 }}
             >
               <div className="text-muted-foreground text-sm">
-                Nie ma żadnych wydarzeń.
+                Nie ma żadnych zadań.
                 <br />
                 Kliknij przycisk "Dodaj" aby utworzyć nowe.
               </div>
@@ -102,14 +102,13 @@ export const EventsSidebar = ({
                 >
                   {/* Date header */}
                   <div className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
-                    {formatEventDate(firstEvent.startTime)}
+                    {formatEventDate(firstEvent.date)}
                   </div>
                   
                   {/* Events for this date */}
                   <div className="space-y-2">
                     {groupEvents.map((event, eventIndex) => {
                       const colors = eventColors[event.color];
-                      const isUpcoming = event.startTime.getTime() > Date.now();
                       
                       return (
                         <motion.div
@@ -134,21 +133,9 @@ export const EventsSidebar = ({
                                 {event.title}
                               </div>
                               
-                              <div className="flex items-center gap-1 mt-1 text-xs text-muted-foreground">
-                                <Clock className="h-3 w-3" />
-                                {format(event.startTime, 'HH:mm')} - {format(event.endTime, 'HH:mm')}
-                              </div>
-                              
                               {event.description && (
                                 <div className="text-xs text-muted-foreground mt-1 truncate">
                                   {event.description}
-                                </div>
-                              )}
-                              
-                              {isUpcoming && event.reminder && event.reminder > 0 && (
-                                <div className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
-                                  <div className="w-2 h-2 rounded-full bg-yellow-500" />
-                                  Przypomnienie: {event.reminder}min
                                 </div>
                               )}
                             </div>

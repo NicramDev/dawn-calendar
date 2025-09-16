@@ -2,10 +2,8 @@ export interface CalendarEvent {
   id: string;
   title: string;
   description?: string;
-  startTime: Date;
-  endTime: Date;
+  date: Date;
   color: EventColor;
-  reminder?: number; // minutes before event
 }
 
 export type EventColor = 'blue' | 'pink' | 'green' | 'purple' | 'orange' | 'yellow';
