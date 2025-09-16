@@ -76,6 +76,17 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
+        mindmap: {
+          background: "hsl(var(--mindmap-background))",
+          node: {
+            blue: "hsl(var(--mindmap-node-blue))",
+            purple: "hsl(var(--mindmap-node-purple))",
+            green: "hsl(var(--mindmap-node-green))",
+            orange: "hsl(var(--mindmap-node-orange))",
+            pink: "hsl(var(--mindmap-node-pink))",
+            yellow: "hsl(var(--mindmap-node-yellow))",
+          },
+        },
       },
       borderRadius: {
         lg: "var(--radius)",

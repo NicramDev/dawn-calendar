@@ -86,6 +86,15 @@ All colors MUST be HSL.
     --sidebar-border: 220 13% 91%;
 
     --sidebar-ring: 217.2 91.2% 59.8%;
+
+    /* Mind map colors */
+    --mindmap-background: 17 24% 9%;
+    --mindmap-node-blue: 217 91% 60%;
+    --mindmap-node-purple: 262 83% 58%;
+    --mindmap-node-green: 142 76% 50%;
+    --mindmap-node-orange: 25 95% 60%;
+    --mindmap-node-pink: 330 81% 60%;
+    --mindmap-node-yellow: 48 96% 60%;
   }
 
   .dark {
@@ -154,6 +163,15 @@ All colors MUST be HSL.
     --sidebar-accent-foreground: 240 4.8% 95.9%;
     --sidebar-border: 240 3.7% 15.9%;
     --sidebar-ring: 217.2 91.2% 59.8%;
+
+    /* Mind map colors - dark theme */
+    --mindmap-background: 17 24% 9%;
+    --mindmap-node-blue: 217 91% 60%;
+    --mindmap-node-purple: 262 83% 65%;
+    --mindmap-node-green: 142 76% 50%;
+    --mindmap-node-orange: 25 95% 60%;
+    --mindmap-node-pink: 330 81% 60%;
+    --mindmap-node-yellow: 48 96% 60%;
   }
 }
 
