@@ -121,29 +121,46 @@ export function MindMapCanvas() {
     };
   }, [selectedNode, isConnecting, deleteNode, setSelectedNode, endConnecting]);
 
-  // Calculate connection points from edge to edge
+  // Global mousemove for panning across elements (including nodes)
+  useEffect(() => {
+    const handleWindowMouseMove = (e: MouseEvent) => {
+      if (!isPanning) return;
+      setPan(prev => ({ x: prev.x + e.movementX, y: prev.y + e.movementY }));
+    };
+    if (isPanning) {
+      window.addEventListener('mousemove', handleWindowMouseMove);
+    }
+    return () => {
+      window.removeEventListener('mousemove', handleWindowMouseMove);
+    };
+  }, [isPanning]);
+
+  // Calculate connection points from edge to edge (rectangle intersection)
   const getConnectionPoint = (fromNode: any, toNode: any) => {
     const fromCenterX = fromNode.x + fromNode.width / 2;
     const fromCenterY = fromNode.y + fromNode.height / 2;
     const toCenterX = toNode.x + toNode.width / 2;
     const toCenterY = toNode.y + toNode.height / 2;
 
-    // Calculate direction vector
     const dx = toCenterX - fromCenterX;
     const dy = toCenterY - fromCenterY;
-    const distance = Math.sqrt(dx * dx + dy * dy);
-    
-    if (distance === 0) return { fromX: fromCenterX, fromY: fromCenterY, toX: toCenterX, toY: toCenterY };
-    
-    // Normalize direction
-    const unitX = dx / distance;
-    const unitY = dy / distance;
-    
-    // Calculate edge points
-    const fromX = fromCenterX + unitX * (fromNode.width / 2);
-    const fromY = fromCenterY + unitY * (fromNode.height / 2);
-    const toX = toCenterX - unitX * (toNode.width / 2);
-    const toY = toCenterY - unitY * (toNode.height / 2);
+    const w = fromNode.width / 2;
+    const h = fromNode.height / 2;
+    const w2 = toNode.width / 2;
+    const h2 = toNode.height / 2;
+
+    if (dx === 0 && dy === 0) {
+      return { fromX: fromCenterX, fromY: fromCenterY, toX: toCenterX, toY: toCenterY };
+    }
+
+    // Scale to rectangle edge from center
+    const scaleFrom = 1 / Math.max(Math.abs(dx) / w, Math.abs(dy) / h);
+    const scaleTo = 1 / Math.max(Math.abs(dx) / w2, Math.abs(dy) / h2);
+
+    const fromX = fromCenterX + dx * scaleFrom;
+    const fromY = fromCenterY + dy * scaleFrom;
+    const toX = toCenterX - dx * scaleTo;
+    const toY = toCenterY - dy * scaleTo;
 
     return { fromX, fromY, toX, toY };
   };
@@ -194,13 +211,22 @@ export function MindMapCanvas() {
         className={`absolute inset-0 w-full h-full ${isPanning ? 'cursor-grabbing' : 'cursor-grab'}`}
         onClick={handleCanvasClick}
         onMouseDown={handleMouseDown}
+        onMouseDownCapture={(e) => {
+          if (e.button === 1 || e.button === 2) {
+            setIsPanning(true);
+            setLastPanPoint({ x: e.clientX, y: e.clientY });
+            e.preventDefault();
+          }
+        }}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
+        onContextMenu={(e) => { if (isPanning) e.preventDefault(); }}
         onWheel={handleWheel}
         style={{ minWidth: '200vw', minHeight: '200vh' }}
       >
         {/* Zoomed and panned content */}
         <div
+          className="relative"
           style={{
             transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
             transformOrigin: '0 0',
@@ -223,7 +249,7 @@ export function MindMapCanvas() {
           <svg
             ref={svgRef}
             className="absolute inset-0 w-full h-full pointer-events-none"
-            style={{ width: '200vw', height: '200vh' }}
+            style={{ width: '100%', height: '100%' }}
           >
             {renderConnections()}
           </svg>
