@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Plus, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -42,7 +42,7 @@ function MindMapCanvasInner() {
     deleteMap,
   } = useMindMap();
 
-  const nodeTypes = {
+  const nodeTypes = useMemo(() => ({
     mindMapNode: (props: NodeProps<MindMapNodeData>) => (
       <ReactFlowMindMapNode 
         {...props} 
@@ -50,8 +50,7 @@ function MindMapCanvasInner() {
         onDelete={deleteNode}
       />
     ),
-  };
-
+  }), [updateNode, deleteNode]);
   const handleCreateMap = () => {
     if (newMapName.trim()) {
       createNewMap(newMapName.trim());
@@ -70,6 +69,16 @@ function MindMapCanvasInner() {
     setSelectedNode(nodeId);
   }, [addNode, setSelectedNode, screenToFlowPosition]);
 
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.key === 'Delete' || e.key === 'Backspace') && selectedNode) {
+        deleteNode(selectedNode);
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [selectedNode, deleteNode]);
+
   return (
     <div className="relative w-full h-full bg-gray-900">
       <ReactFlow
@@ -79,7 +88,13 @@ function MindMapCanvasInner() {
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
         onPaneClick={handlePaneClick}
+        onNodeClick={(_, node) => setSelectedNode(node.id)}
+        onSelectionChange={({ nodes }) => setSelectedNode(nodes[0]?.id ?? null)}
         nodeTypes={nodeTypes}
+        panOnDrag
+        selectionOnDrag={false}
+        zoomOnScroll
+        zoomOnPinch
         connectionLineStyle={{
           stroke: 'rgba(139, 92, 246, 0.8)',
           strokeWidth: 3,
