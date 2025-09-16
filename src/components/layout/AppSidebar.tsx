@@ -66,7 +66,7 @@ export function AppSidebar({ isOpen, activeTab, onClose, onTabChange }: AppSideb
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.2 }}
                 >
-                  Menu
+                  SKUULY
                 </motion.h2>
                 <Button
                   variant="ghost"
@@ -136,7 +136,7 @@ export function AppSidebar({ isOpen, activeTab, onClose, onTabChange }: AppSideb
                 transition={{ delay: 0.4 }}
               >
                 <p className="text-xs text-sidebar-foreground/60 text-center">
-                  Kalendarz & Mapa myśli
+                  SKUULY - Kalendarz & Mapa myśli
                 </p>
               </motion.div>
             </div>
