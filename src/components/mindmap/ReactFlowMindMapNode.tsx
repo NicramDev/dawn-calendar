@@ -55,73 +55,61 @@ function ReactFlowMindMapNode({ id, data, selected, onUpdate, onDelete, isConnec
         delay: Math.random() * 0.2 
       }}
     >
-      {/* Connection handles - source and target for each side; fixed, no hover movement */}
-      <Handle
-        type="source"
-        position={Position.Top}
-        id="top-s"
-        isConnectableStart={true}
-        isConnectableEnd={true}
-        className="!w-4 !h-4 !bg-white !border-2 !border-current !rounded-full"
-      />
+      {/* Connection handles: visible source, invisible target underneath, one per side */}
+      {/* Top */}
       <Handle
         type="target"
         position={Position.Top}
         id="top-t"
-        isConnectableStart={true}
-        isConnectableEnd={true}
-        className="!w-4 !h-4 !bg-white !border-2 !border-current !rounded-full"
+        className="w-3 h-3 opacity-0 z-0"
       />
-
       <Handle
         type="source"
-        position={Position.Right}
-        id="right-s"
-        isConnectableStart={true}
-        isConnectableEnd={true}
-        className="!w-4 !h-4 !bg-white !border-2 !border-current !rounded-full"
+        position={Position.Top}
+        id="top-s"
+        className="w-3 h-3 bg-white border-2 border-current rounded-full z-10"
       />
+
+      {/* Right */}
       <Handle
         type="target"
         position={Position.Right}
         id="right-t"
-        isConnectableStart={true}
-        isConnectableEnd={true}
-        className="!w-4 !h-4 !bg-white !border-2 !border-current !rounded-full"
+        className="w-3 h-3 opacity-0 z-0"
       />
-
       <Handle
         type="source"
-        position={Position.Bottom}
-        id="bottom-s"
-        isConnectableStart={true}
-        isConnectableEnd={true}
-        className="!w-4 !h-4 !bg-white !border-2 !border-current !rounded-full"
+        position={Position.Right}
+        id="right-s"
+        className="w-3 h-3 bg-white border-2 border-current rounded-full z-10"
       />
+
+      {/* Bottom */}
       <Handle
         type="target"
         position={Position.Bottom}
         id="bottom-t"
-        isConnectableStart={true}
-        isConnectableEnd={true}
-        className="!w-4 !h-4 !bg-white !border-2 !border-current !rounded-full"
+        className="w-3 h-3 opacity-0 z-0"
       />
-
       <Handle
         type="source"
-        position={Position.Left}
-        id="left-s"
-        isConnectableStart={true}
-        isConnectableEnd={true}
-        className="!w-4 !h-4 !bg-white !border-2 !border-current !rounded-full"
+        position={Position.Bottom}
+        id="bottom-s"
+        className="w-3 h-3 bg-white border-2 border-current rounded-full z-10"
       />
+
+      {/* Left */}
       <Handle
         type="target"
         position={Position.Left}
         id="left-t"
-        isConnectableStart={true}
-        isConnectableEnd={true}
-        className="!w-4 !h-4 !bg-white !border-2 !border-current !rounded-full"
+        className="w-3 h-3 opacity-0 z-0"
+      />
+      <Handle
+        type="source"
+        position={Position.Left}
+        id="left-s"
+        className="w-3 h-3 bg-white border-2 border-current rounded-full z-10"
       />
 
       <div className="p-3 flex flex-col h-full">
