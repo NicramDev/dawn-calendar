@@ -99,8 +99,8 @@ function MindMapCanvasInner() {
         onNodeClick={(_, node) => setSelectedNode(node.id)}
         onSelectionChange={({ nodes }) => setSelectedNode(nodes[0]?.id ?? null)}
         nodeTypes={nodeTypes}
-        connectionMode={ConnectionMode.Loose}
         connectOnClick={false}
+        deleteKeyCode={['Delete', 'Backspace']}
         panOnDrag
         selectionOnDrag={false}
         zoomOnScroll

@@ -55,61 +55,57 @@ function ReactFlowMindMapNode({ id, data, selected, onUpdate, onDelete, isConnec
         delay: Math.random() * 0.2 
       }}
     >
-      {/* Connection Handles - fixed position, no hover movement */}
-      {/* Top handles */}
+      {/* Connection handles - source and target for each side */}
       <Handle
         type="source"
         position={Position.Top}
-        id="top-source"
-        className="!w-4 !h-4 !bg-white !border-2 !border-current"
+        id="top-s"
+        className="!w-4 !h-4 !bg-white !border-2 !border-current !rounded-full"
       />
       <Handle
         type="target"
         position={Position.Top}
-        id="top-target"
-        className="!w-4 !h-4 !bg-white !border-2 !border-current"
+        id="top-t"
+        className="!w-4 !h-4 !bg-white !border-2 !border-current !rounded-full"
       />
       
-      {/* Right handles */}
       <Handle
         type="source"
         position={Position.Right}
-        id="right-source"
-        className="!w-4 !h-4 !bg-white !border-2 !border-current"
+        id="right-s"
+        className="!w-4 !h-4 !bg-white !border-2 !border-current !rounded-full"
       />
       <Handle
         type="target"
         position={Position.Right}
-        id="right-target"
-        className="!w-4 !h-4 !bg-white !border-2 !border-current"
+        id="right-t"
+        className="!w-4 !h-4 !bg-white !border-2 !border-current !rounded-full"
       />
       
-      {/* Bottom handles */}
       <Handle
         type="source"
         position={Position.Bottom}
-        id="bottom-source"
-        className="!w-4 !h-4 !bg-white !border-2 !border-current"
+        id="bottom-s"
+        className="!w-4 !h-4 !bg-white !border-2 !border-current !rounded-full"
       />
       <Handle
         type="target"
         position={Position.Bottom}
-        id="bottom-target"
-        className="!w-4 !h-4 !bg-white !border-2 !border-current"
+        id="bottom-t"
+        className="!w-4 !h-4 !bg-white !border-2 !border-current !rounded-full"
       />
       
-      {/* Left handles */}
       <Handle
         type="source"
         position={Position.Left}
-        id="left-source"
-        className="!w-4 !h-4 !bg-white !border-2 !border-current"
+        id="left-s"
+        className="!w-4 !h-4 !bg-white !border-2 !border-current !rounded-full"
       />
       <Handle
         type="target"
         position={Position.Left}
-        id="left-target"
-        className="!w-4 !h-4 !bg-white !border-2 !border-current"
+        id="left-t"
+        className="!w-4 !h-4 !bg-white !border-2 !border-current !rounded-full"
       />
 
       <div className="p-3 flex flex-col h-full">
