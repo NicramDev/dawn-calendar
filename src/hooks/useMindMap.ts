@@ -23,61 +23,42 @@ export interface MindMapData {
   connections: MindMapConnection[];
 }
 
-const defaultMindMapData: MindMapData = {
-  nodes: [],
-  connections: []
+export interface MindMap {
+  id: string;
+  name: string;
+  data: MindMapData;
+  createdAt: Date;
+}
+
+const defaultMindMap: MindMap = {
+  id: 'default',
+  name: 'Moja pierwsza mapa',
+  data: { nodes: [], connections: [] },
+  createdAt: new Date()
 };
 
 export function useMindMap() {
-  const [mindMapData, setMindMapData] = useLocalStorage<MindMapData>('mindMapData', defaultMindMapData);
+  const [mindMaps, setMindMaps] = useLocalStorage<MindMap[]>('mindMaps', [defaultMindMap]);
+  const [currentMapId, setCurrentMapId] = useLocalStorage<string>('currentMapId', 'default');
   const [selectedNode, setSelectedNode] = useState<string | null>(null);
   const [draggedNode, setDraggedNode] = useState<string | null>(null);
   const [isConnecting, setIsConnecting] = useState(false);
   const [connectingFrom, setConnectingFrom] = useState<string | null>(null);
+  
+  const currentMap = mindMaps.find(map => map.id === currentMapId) || mindMaps[0];
+  const currentData = currentMap?.data || { nodes: [], connections: [] };
 
-  const addNode = useCallback((x: number, y: number) => {
-    const newNode: MindMapNode = {
-      id: crypto.randomUUID(),
-      title: 'Nowy węzeł',
-      content: '',
-      x,
-      y,
-      width: 200,
-      height: 100,
-      color: 'blue'
-    };
-
-    setMindMapData(prev => ({
-      ...prev,
-      nodes: [...prev.nodes, newNode]
-    }));
-
-    return newNode.id;
-  }, [setMindMapData]);
-
-  const updateNode = useCallback((id: string, updates: Partial<MindMapNode>) => {
-    setMindMapData(prev => ({
-      ...prev,
-      nodes: prev.nodes.map(node =>
-        node.id === id ? { ...node, ...updates } : node
-      )
-    }));
-  }, [setMindMapData]);
-
-  const deleteNode = useCallback((id: string) => {
-    setMindMapData(prev => ({
-      nodes: prev.nodes.filter(node => node.id !== id),
-      connections: prev.connections.filter(conn => conn.from !== id && conn.to !== id)
-    }));
-  }, [setMindMapData]);
-
-  const moveNode = useCallback((id: string, x: number, y: number) => {
-    updateNode(id, { x, y });
-  }, [updateNode]);
+  const updateCurrentMap = useCallback((updates: Partial<MindMapData>) => {
+    setMindMaps(prev => prev.map(map => 
+      map.id === currentMapId 
+        ? { ...map, data: { ...map.data, ...updates } }
+        : map
+    ));
+  }, [currentMapId, setMindMaps]);
 
   const addConnection = useCallback((fromId: string, toId: string) => {
     // Check if connection already exists
-    const exists = mindMapData.connections.some(
+    const exists = currentData.connections.some(
       conn => (conn.from === fromId && conn.to === toId) || (conn.from === toId && conn.to === fromId)
     );
 
@@ -88,19 +69,129 @@ export function useMindMap() {
         to: toId
       };
 
-      setMindMapData(prev => ({
-        ...prev,
-        connections: [...prev.connections, newConnection]
-      }));
+      updateCurrentMap({
+        connections: [...currentData.connections, newConnection]
+      });
     }
-  }, [mindMapData.connections, setMindMapData]);
+  }, [currentData.connections, updateCurrentMap]);
+
+  // Auto-connect nodes when they're close
+  const checkAutoConnect = useCallback((nodeId: string, x: number, y: number) => {
+    const CONNECT_DISTANCE = 120;
+    const draggedNodeObj = currentData.nodes.find(n => n.id === nodeId);
+    
+    if (!draggedNodeObj) return;
+    
+    const closeNodes = currentData.nodes.filter(node => {
+      if (node.id === nodeId) return false;
+      
+      const distance = Math.sqrt(
+        Math.pow(node.x + node.width/2 - (x + draggedNodeObj.width/2), 2) +
+        Math.pow(node.y + node.height/2 - (y + draggedNodeObj.height/2), 2)
+      );
+      
+      return distance < CONNECT_DISTANCE;
+    });
+    
+    closeNodes.forEach(node => {
+      const exists = currentData.connections.some(
+        conn => (conn.from === nodeId && conn.to === node.id) || (conn.from === node.id && conn.to === nodeId)
+      );
+      
+      if (!exists) {
+        addConnection(nodeId, node.id);
+      }
+    });
+  }, [currentData, addConnection]);
+
+  const addNode = useCallback((x: number, y: number) => {
+    const colors = ['blue', 'purple', 'green', 'orange', 'pink', 'yellow'];
+    const randomColor = colors[Math.floor(Math.random() * colors.length)];
+    
+    const newNode: MindMapNode = {
+      id: crypto.randomUUID(),
+      title: 'Nowy węzeł',
+      content: '',
+      x,
+      y,
+      width: 200,
+      height: 100,
+      color: randomColor
+    };
+
+    updateCurrentMap({
+      nodes: [...currentData.nodes, newNode]
+    });
+
+    return newNode.id;
+  }, [currentData.nodes, updateCurrentMap]);
+
+  const updateNode = useCallback((id: string, updates: Partial<MindMapNode>) => {
+    updateCurrentMap({
+      nodes: currentData.nodes.map(node =>
+        node.id === id ? { ...node, ...updates } : node
+      )
+    });
+  }, [currentData.nodes, updateCurrentMap]);
+
+  const deleteNode = useCallback((id: string) => {
+    updateCurrentMap({
+      nodes: currentData.nodes.filter(node => node.id !== id),
+      connections: currentData.connections.filter(conn => conn.from !== id && conn.to !== id)
+    });
+  }, [currentData, updateCurrentMap]);
+
+  const moveNode = useCallback((id: string, x: number, y: number) => {
+    updateNode(id, { x, y });
+    checkAutoConnect(id, x, y);
+  }, [updateNode, checkAutoConnect]);
+
 
   const deleteConnection = useCallback((id: string) => {
-    setMindMapData(prev => ({
-      ...prev,
-      connections: prev.connections.filter(conn => conn.id !== id)
-    }));
-  }, [setMindMapData]);
+    updateCurrentMap({
+      connections: currentData.connections.filter(conn => conn.id !== id)
+    });
+  }, [currentData.connections, updateCurrentMap]);
+
+  const createNewMap = useCallback((name: string) => {
+    const newMap: MindMap = {
+      id: crypto.randomUUID(),
+      name,
+      data: { nodes: [], connections: [] },
+      createdAt: new Date()
+    };
+    
+    setMindMaps(prev => [...prev, newMap]);
+    setCurrentMapId(newMap.id);
+    return newMap.id;
+  }, [setMindMaps, setCurrentMapId]);
+
+  const deleteMap = useCallback((mapId: string) => {
+    setMindMaps(prev => {
+      const newMaps = prev.filter(map => map.id !== mapId);
+      if (newMaps.length === 0) {
+        const defaultMap: MindMap = {
+          id: 'default',
+          name: 'Moja pierwsza mapa',
+          data: { nodes: [], connections: [] },
+          createdAt: new Date()
+        };
+        return [defaultMap];
+      }
+      return newMaps;
+    });
+    
+    if (currentMapId === mapId) {
+      const remainingMaps = mindMaps.filter(map => map.id !== mapId);
+      setCurrentMapId(remainingMaps[0]?.id || 'default');
+    }
+  }, [setMindMaps, currentMapId, setCurrentMapId, mindMaps]);
+
+  const renameMap = useCallback((mapId: string, newName: string) => {
+    setMindMaps(prev => prev.map(map => 
+      map.id === mapId ? { ...map, name: newName } : map
+    ));
+  }, [setMindMaps]);
 
   const startConnecting = useCallback((nodeId: string) => {
     setIsConnecting(true);
@@ -116,8 +207,12 @@ export function useMindMap() {
   }, [isConnecting, connectingFrom, addConnection]);
 
   return {
-    nodes: mindMapData.nodes,
-    connections: mindMapData.connections,
+    // Current map data
+    nodes: currentData.nodes,
+    connections: currentData.connections,
+    currentMap,
+    
+    // Node operations
     selectedNode,
     setSelectedNode,
     draggedNode,
@@ -132,5 +227,13 @@ export function useMindMap() {
     deleteConnection,
     startConnecting,
     endConnecting,
+    
+    // Map management
+    mindMaps,
+    currentMapId,
+    setCurrentMapId,
+    createNewMap,
+    deleteMap,
+    renameMap,
   };
 }

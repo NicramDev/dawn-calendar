@@ -1,13 +1,19 @@
 import { useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Plus, X } from 'lucide-react';
+import { Plus, X, Map, Trash2, Edit3 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { MindMapNode } from './MindMapNode';
 import { useMindMap } from '@/hooks/useMindMap';
+import { useState } from 'react';
 
 export function MindMapCanvas() {
   const canvasRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
+  const [newMapName, setNewMapName] = useState('');
+  const [isCreatingMap, setIsCreatingMap] = useState(false);
   
   const {
     nodes,
@@ -22,7 +28,23 @@ export function MindMapCanvas() {
     moveNode,
     startConnecting,
     endConnecting,
+    // Map management
+    mindMaps,
+    currentMap,
+    currentMapId,
+    setCurrentMapId,
+    createNewMap,
+    deleteMap,
+    renameMap,
   } = useMindMap();
+
+  const handleCreateMap = () => {
+    if (newMapName.trim()) {
+      createNewMap(newMapName.trim());
+      setNewMapName('');
+      setIsCreatingMap(false);
+    }
+  };
 
   // Handle canvas click for adding new nodes and deselecting
   const handleCanvasClick = (e: React.MouseEvent) => {
@@ -133,6 +155,73 @@ export function MindMapCanvas() {
             onEndConnecting={endConnecting}
           />
         ))}
+      </div>
+
+      {/* Map Selector */}
+      <div className="absolute top-4 left-4 space-y-2">
+        <div className="bg-black/80 backdrop-blur-sm rounded-lg p-3 text-white min-w-64">
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="text-sm font-medium">Mapy myśli</h3>
+            <Dialog open={isCreatingMap} onOpenChange={setIsCreatingMap}>
+              <DialogTrigger asChild>
+                <Button size="sm" variant="ghost" className="h-6 w-6 p-0 text-white hover:bg-white/20">
+                  <Plus className="h-3 w-3" />
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-md">
+                <DialogHeader>
+                  <DialogTitle>Nowa mapa myśli</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <Input
+                    placeholder="Nazwa mapy..."
+                    value={newMapName}
+                    onChange={(e) => setNewMapName(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleCreateMap()}
+                  />
+                  <div className="flex space-x-2">
+                    <Button onClick={handleCreateMap} className="flex-1">
+                      Utwórz
+                    </Button>
+                    <Button variant="outline" onClick={() => setIsCreatingMap(false)} className="flex-1">
+                      Anuluj
+                    </Button>
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
+          </div>
+          
+          <Select value={currentMapId} onValueChange={setCurrentMapId}>
+            <SelectTrigger className="w-full bg-white/10 border-white/20 text-white">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {mindMaps.map(map => (
+                <SelectItem key={map.id} value={map.id}>
+                  <div className="flex items-center justify-between w-full">
+                    <span>{map.name}</span>
+                    <span className="text-xs text-muted-foreground ml-2">
+                      ({map.data.nodes.length} węzłów)
+                    </span>
+                  </div>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          
+          {mindMaps.length > 1 && (
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => deleteMap(currentMapId)}
+              className="w-full mt-2 text-red-400 hover:bg-red-500/20 hover:text-red-300"
+            >
+              <Trash2 className="h-3 w-3 mr-1" />
+              Usuń mapę
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* Floating UI */}

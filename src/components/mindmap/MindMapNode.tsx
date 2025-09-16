@@ -86,13 +86,31 @@ export function MindMapNode({
       }}
       drag
       dragMomentum={false}
+      dragElastic={0.1}
+      dragTransition={{ 
+        bounceStiffness: 300, 
+        bounceDamping: 30,
+        power: 0.3,
+        timeConstant: 750
+      }}
       onDragEnd={handleDragEnd}
       onClick={handleClick}
-      whileHover={{ scale: 1.02 }}
+      whileHover={{ scale: 1.02, boxShadow: "0 10px 30px -10px rgba(139, 92, 246, 0.4)" }}
       whileTap={{ scale: 0.98 }}
-      initial={{ opacity: 0, scale: 0.8 }}
-      animate={{ opacity: 1, scale: 1 }}
-      transition={{ type: "spring", stiffness: 300, damping: 30 }}
+      whileDrag={{ 
+        scale: 1.05, 
+        rotate: 2,
+        boxShadow: "0 20px 40px -10px rgba(139, 92, 246, 0.6)",
+        zIndex: 50
+      }}
+      initial={{ opacity: 0, scale: 0.8, y: -20 }}
+      animate={{ opacity: 1, scale: 1, y: 0 }}
+      transition={{ 
+        type: "spring", 
+        stiffness: 300, 
+        damping: 30,
+        delay: Math.random() * 0.2 
+      }}
     >
       <div className="h-full flex flex-col p-3">
         {isEditing ? (

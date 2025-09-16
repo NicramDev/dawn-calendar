@@ -92,7 +92,7 @@ export function AppSidebar({ isOpen, activeTab, onClose, onTabChange }: AppSideb
                         animate={{ opacity: 1, x: 0 }}
                         transition={{ delay: 0.1 + index * 0.1 }}
                       >
-                        <Button
+                         <Button
                           variant={isActive ? "default" : "ghost"}
                           className={cn(
                             "w-full justify-start p-4 h-auto text-left transition-all duration-200",
@@ -106,7 +106,11 @@ export function AppSidebar({ isOpen, activeTab, onClose, onTabChange }: AppSideb
                           }}
                         >
                           <div className="flex items-start space-x-3">
-                            <Icon className="h-5 w-5 mt-0.5 flex-shrink-0" />
+                            <Icon className={cn(
+                              "h-5 w-5 mt-0.5 flex-shrink-0",
+                              // First icon (Calendar) gets special color
+                              index === 0 && !isActive && "text-blue-500"
+                            )} />
                             <div className="flex-1 min-w-0">
                               <div className="font-medium">{tab.label}</div>
                               <div className={cn(
