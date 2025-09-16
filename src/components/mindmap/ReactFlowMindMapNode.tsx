@@ -60,29 +60,33 @@ function ReactFlowMindMapNode({ id, data, selected, onUpdate, onDelete, isConnec
         type="source"
         position={Position.Top}
         id="s-top"
-        isConnectable={isConnectable}
+        isConnectable={true}
         className="w-3 h-3 bg-white border-2 border-current shadow-lg hover:scale-110 transition-transform"
+        style={{ left: '50%', top: -6 }}
       />
       <Handle
         type="source"
         position={Position.Right}
         id="s-right"
-        isConnectable={isConnectable}
+        isConnectable={true}
         className="w-3 h-3 bg-white border-2 border-current shadow-lg hover:scale-110 transition-transform"
+        style={{ right: -6, top: '50%' }}
       />
       <Handle
         type="source"
         position={Position.Bottom}
         id="s-bottom"
-        isConnectable={isConnectable}
+        isConnectable={true}
         className="w-3 h-3 bg-white border-2 border-current shadow-lg hover:scale-110 transition-transform"
+        style={{ left: '50%', bottom: -6 }}
       />
       <Handle
         type="source"
         position={Position.Left}
         id="s-left"
-        isConnectable={isConnectable}
+        isConnectable={true}
         className="w-3 h-3 bg-white border-2 border-current shadow-lg hover:scale-110 transition-transform"
+        style={{ left: -6, top: '50%' }}
       />
       
       {/* Target Handles */}
@@ -90,29 +94,33 @@ function ReactFlowMindMapNode({ id, data, selected, onUpdate, onDelete, isConnec
         type="target"
         position={Position.Top}
         id="t-top"
-        isConnectable={isConnectable}
+        isConnectable={true}
         className="w-3 h-3 bg-white border-2 border-current shadow-lg hover:scale-110 transition-transform"
+        style={{ left: '50%', top: -6 }}
       />
       <Handle
         type="target"
         position={Position.Right}
         id="t-right"
-        isConnectable={isConnectable}
+        isConnectable={true}
         className="w-3 h-3 bg-white border-2 border-current shadow-lg hover:scale-110 transition-transform"
+        style={{ right: -6, top: '50%' }}
       />
       <Handle
         type="target"
         position={Position.Bottom}
         id="t-bottom"
-        isConnectable={isConnectable}
+        isConnectable={true}
         className="w-3 h-3 bg-white border-2 border-current shadow-lg hover:scale-110 transition-transform"
+        style={{ left: '50%', bottom: -6 }}
       />
       <Handle
         type="target"
         position={Position.Left}
         id="t-left"
-        isConnectable={isConnectable}
+        isConnectable={true}
         className="w-3 h-3 bg-white border-2 border-current shadow-lg hover:scale-110 transition-transform"
+        style={{ left: -6, top: '50%' }}
       />
 
       <div className="p-3 flex flex-col h-full">
