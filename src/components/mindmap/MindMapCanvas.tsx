@@ -1,37 +1,38 @@
-import { useRef, useEffect } from 'react';
+import { useCallback, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Plus, X, Map, Trash2, Edit3 } from 'lucide-react';
+import { Plus, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { MindMapNode } from './MindMapNode';
-import { useMindMap } from '@/hooks/useMindMap';
-import { useState } from 'react';
+import ReactFlow, { 
+  Background, 
+  Controls, 
+  MiniMap,
+  useReactFlow,
+  ReactFlowProvider,
+  NodeProps
+} from 'reactflow';
+import 'reactflow/dist/style.css';
+import { useMindMap, MindMapNodeData } from '@/hooks/useMindMap';
+import ReactFlowMindMapNode from './ReactFlowMindMapNode';
 
-export function MindMapCanvas() {
-  const canvasRef = useRef<HTMLDivElement>(null);
-  const svgRef = useRef<SVGSVGElement>(null);
+function MindMapCanvasInner() {
   const [newMapName, setNewMapName] = useState('');
   const [isCreatingMap, setIsCreatingMap] = useState(false);
-  const [pan, setPan] = useState({ x: 0, y: 0 });
-  const [zoom, setZoom] = useState(1);
-  const [isPanning, setIsPanning] = useState(false);
-  const [lastPanPoint, setLastPanPoint] = useState({ x: 0, y: 0 });
+  const { screenToFlowPosition } = useReactFlow();
   
   const {
     nodes,
-    connections,
+    edges,
+    onNodesChange,
+    onEdgesChange,
+    onConnect,
     selectedNode,
     setSelectedNode,
-    isConnecting,
-    connectingFrom,
     addNode,
     updateNode,
     deleteNode,
-    moveNode,
-    startConnecting,
-    endConnecting,
     // Map management
     mindMaps,
     currentMap,
@@ -39,8 +40,17 @@ export function MindMapCanvas() {
     setCurrentMapId,
     createNewMap,
     deleteMap,
-    renameMap,
   } = useMindMap();
+
+  const nodeTypes = {
+    mindMapNode: (props: NodeProps<MindMapNodeData>) => (
+      <ReactFlowMindMapNode 
+        {...props} 
+        onUpdate={updateNode}
+        onDelete={deleteNode}
+      />
+    ),
+  };
 
   const handleCreateMap = () => {
     if (newMapName.trim()) {
@@ -50,231 +60,63 @@ export function MindMapCanvas() {
     }
   };
 
-  // Handle canvas click for adding new nodes and deselecting
-  const handleCanvasClick = (e: React.MouseEvent) => {
-    if (e.target === canvasRef.current && !isPanning) {
-      if (isConnecting) {
-        endConnecting();
-      } else {
-        const rect = canvasRef.current!.getBoundingClientRect();
-        const x = (e.clientX - rect.left - pan.x) / zoom - 100;
-        const y = (e.clientY - rect.top - pan.y) / zoom - 50;
-        const nodeId = addNode(Math.max(0, x), Math.max(0, y));
-        setSelectedNode(nodeId);
-      }
-    }
-  };
-
-  // Handle mouse events for panning
-  const handleMouseDown = (e: React.MouseEvent) => {
-    if (e.button === 0 && e.target === canvasRef.current) { // Left click
-      setIsPanning(true);
-      setLastPanPoint({ x: e.clientX, y: e.clientY });
-    }
-  };
-
-  const handleMouseMove = (e: React.MouseEvent) => {
-    if (isPanning) {
-      const deltaX = e.clientX - lastPanPoint.x;
-      const deltaY = e.clientY - lastPanPoint.y;
-      setPan(prev => ({ x: prev.x + deltaX, y: prev.y + deltaY }));
-      setLastPanPoint({ x: e.clientX, y: e.clientY });
-    }
-  };
-
-  const handleMouseUp = () => {
-    setIsPanning(false);
-  };
-
-  // Handle zoom
-  const handleWheel = (e: React.WheelEvent) => {
-    e.preventDefault();
-    const delta = e.deltaY > 0 ? 0.9 : 1.1;
-    const newZoom = Math.min(Math.max(zoom * delta, 0.1), 3);
-    setZoom(newZoom);
-  };
-
-  // Handle keyboard shortcuts
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        if (isConnecting) {
-          endConnecting();
-        } else {
-          setSelectedNode(null);
-        }
-      } else if (e.key === 'Delete' && selectedNode) {
-        deleteNode(selectedNode);
-        setSelectedNode(null);
-      }
-    };
-
-    const handleGlobalMouseUp = () => {
-      setIsPanning(false);
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    window.addEventListener('mouseup', handleGlobalMouseUp);
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-      window.removeEventListener('mouseup', handleGlobalMouseUp);
-    };
-  }, [selectedNode, isConnecting, deleteNode, setSelectedNode, endConnecting]);
-
-  // Global mousemove for panning across elements (including nodes)
-  useEffect(() => {
-    const handleWindowMouseMove = (e: MouseEvent) => {
-      if (!isPanning) return;
-      setPan(prev => ({ x: prev.x + e.movementX, y: prev.y + e.movementY }));
-    };
-    if (isPanning) {
-      window.addEventListener('mousemove', handleWindowMouseMove);
-    }
-    return () => {
-      window.removeEventListener('mousemove', handleWindowMouseMove);
-    };
-  }, [isPanning]);
-
-  // Calculate connection points from edge to edge (rectangle intersection)
-  const getConnectionPoint = (fromNode: any, toNode: any) => {
-    const fromCenterX = fromNode.x + fromNode.width / 2;
-    const fromCenterY = fromNode.y + fromNode.height / 2;
-    const toCenterX = toNode.x + toNode.width / 2;
-    const toCenterY = toNode.y + toNode.height / 2;
-
-    const dx = toCenterX - fromCenterX;
-    const dy = toCenterY - fromCenterY;
-    const w = fromNode.width / 2;
-    const h = fromNode.height / 2;
-    const w2 = toNode.width / 2;
-    const h2 = toNode.height / 2;
-
-    if (dx === 0 && dy === 0) {
-      return { fromX: fromCenterX, fromY: fromCenterY, toX: toCenterX, toY: toCenterY };
-    }
-
-    // Scale to rectangle edge from center
-    const scaleFrom = 1 / Math.max(Math.abs(dx) / w, Math.abs(dy) / h);
-    const scaleTo = 1 / Math.max(Math.abs(dx) / w2, Math.abs(dy) / h2);
-
-    const fromX = fromCenterX + dx * scaleFrom;
-    const fromY = fromCenterY + dy * scaleFrom;
-    const toX = toCenterX - dx * scaleTo;
-    const toY = toCenterY - dy * scaleTo;
-
-    return { fromX, fromY, toX, toY };
-  };
-
-  // Render connections as SVG lines
-  const renderConnections = () => {
-    return connections.map(connection => {
-      const fromNode = nodes.find(n => n.id === connection.from);
-      const toNode = nodes.find(n => n.id === connection.to);
-      
-      if (!fromNode || !toNode) return null;
-
-      const { fromX, fromY, toX, toY } = getConnectionPoint(fromNode, toNode);
-
-      // Create curved path for smoother connections
-      const controlX1 = fromX + (toX - fromX) * 0.5;
-      const controlY1 = fromY;
-      const controlX2 = fromX + (toX - fromX) * 0.5;
-      const controlY2 = toY;
-
-      const pathData = `M ${fromX} ${fromY} C ${controlX1} ${controlY1}, ${controlX2} ${controlY2}, ${toX} ${toY}`;
-
-      return (
-        <motion.path
-          key={connection.id}
-          d={pathData}
-          stroke="rgba(139, 92, 246, 0.7)"
-          strokeWidth="3"
-          strokeLinecap="round"
-          fill="none"
-          initial={{ pathLength: 0, opacity: 0 }}
-          animate={{ pathLength: 1, opacity: 1 }}
-          transition={{ 
-            duration: 0.8,
-            ease: "easeInOut"
-          }}
-          filter="drop-shadow(0 2px 4px rgba(139, 92, 246, 0.3))"
-        />
-      );
+  const handlePaneClick = useCallback((event: React.MouseEvent) => {
+    const position = screenToFlowPosition({
+      x: event.clientX,
+      y: event.clientY,
     });
-  };
+    
+    const nodeId = addNode(position.x - 100, position.y - 50);
+    setSelectedNode(nodeId);
+  }, [addNode, setSelectedNode, screenToFlowPosition]);
 
   return (
-    <div className="relative w-full h-full bg-gray-900 overflow-hidden">
-      {/* Canvas */}
-      <div
-        ref={canvasRef}
-        className={`absolute inset-0 w-full h-full ${isPanning ? 'cursor-grabbing' : 'cursor-grab'}`}
-        onClick={handleCanvasClick}
-        onMouseDown={handleMouseDown}
-        onMouseDownCapture={(e) => {
-          if (e.button === 1 || e.button === 2) {
-            setIsPanning(true);
-            setLastPanPoint({ x: e.clientX, y: e.clientY });
-            e.preventDefault();
-          }
+    <div className="relative w-full h-full bg-gray-900">
+      <ReactFlow
+        nodes={nodes}
+        edges={edges}
+        onNodesChange={onNodesChange}
+        onEdgesChange={onEdgesChange}
+        onConnect={onConnect}
+        onPaneClick={handlePaneClick}
+        nodeTypes={nodeTypes}
+        connectionLineStyle={{
+          stroke: 'rgba(139, 92, 246, 0.8)',
+          strokeWidth: 3,
         }}
-        onMouseMove={handleMouseMove}
-        onMouseUp={handleMouseUp}
-        onContextMenu={(e) => { if (isPanning) e.preventDefault(); }}
-        onWheel={handleWheel}
-        style={{ minWidth: '200vw', minHeight: '200vh' }}
+        defaultEdgeOptions={{
+          type: 'smoothstep',
+          animated: true,
+          style: { stroke: 'rgba(139, 92, 246, 0.8)', strokeWidth: 3 }
+        }}
+        fitView
+        fitViewOptions={{ padding: 0.2 }}
       >
-        {/* Zoomed and panned content */}
-        <div
-          className="relative"
+        <Background color="rgba(139, 92, 246, 0.3)" gap={30} />
+        <Controls 
+          position="bottom-right"
+          showInteractive={false}
+        />
+        <MiniMap 
+          position="bottom-left"
           style={{
-            transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
-            transformOrigin: '0 0',
-            width: '200vw',
-            height: '200vh',
+            backgroundColor: 'rgba(0, 0, 0, 0.8)',
           }}
-        >
-          {/* Grid pattern */}
-          <div 
-            className="absolute inset-0 opacity-20"
-            style={{
-              backgroundImage: `
-                radial-gradient(circle, rgba(139, 92, 246, 0.3) 1px, transparent 1px)
-              `,
-              backgroundSize: '30px 30px',
-            }}
-          />
-
-          {/* SVG for connections */}
-          <svg
-            ref={svgRef}
-            className="absolute inset-0 w-full h-full pointer-events-none"
-            style={{ width: '100%', height: '100%' }}
-          >
-            {renderConnections()}
-          </svg>
-
-          {/* Render nodes */}
-          {nodes.map(node => (
-            <MindMapNode
-              key={node.id}
-              node={node}
-              isSelected={selectedNode === node.id}
-              isConnecting={isConnecting}
-              connectingFrom={connectingFrom}
-              onUpdate={updateNode}
-              onDelete={deleteNode}
-              onMove={moveNode}
-              onSelect={setSelectedNode}
-              onStartConnecting={startConnecting}
-              onEndConnecting={endConnecting}
-            />
-          ))}
-        </div>
-      </div>
+          nodeColor={(node) => {
+            const colors = {
+              blue: '#3b82f6',
+              purple: '#8b5cf6',
+              green: '#10b981',
+              orange: '#f59e0b',
+              pink: '#ec4899',
+            };
+            return colors[node.data.color as keyof typeof colors] || colors.blue;
+          }}
+        />
+      </ReactFlow>
 
       {/* Map Selector */}
-      <div className="absolute top-4 left-4 space-y-2">
+      <div className="absolute top-4 left-4 space-y-2 z-10">
         <div className="bg-black/80 backdrop-blur-sm rounded-lg p-3 text-white min-w-64">
           <div className="flex items-center justify-between mb-2">
             <h3 className="text-sm font-medium">Mapy myśli</h3>
@@ -318,7 +160,7 @@ export function MindMapCanvas() {
                   <div className="flex items-center justify-between w-full">
                     <span>{map.name}</span>
                     <span className="text-xs text-muted-foreground ml-2">
-                      ({map.data.nodes.length} węzłów)
+                      ({map.nodes.length} węzłów)
                     </span>
                   </div>
                 </SelectItem>
@@ -333,38 +175,18 @@ export function MindMapCanvas() {
               onClick={() => deleteMap(currentMapId)}
               className="w-full mt-2 text-red-400 hover:bg-red-500/20 hover:text-red-300"
             >
-              <Trash2 className="h-3 w-3 mr-1" />
+              <X className="h-3 w-3 mr-1" />
               Usuń mapę
             </Button>
           )}
         </div>
       </div>
 
-      {/* Floating UI */}
-      <div className="absolute top-4 right-4 space-y-2">
-        {isConnecting && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="bg-purple-600 text-white px-4 py-2 rounded-lg shadow-lg flex items-center space-x-2"
-          >
-            <span className="text-sm">Kliknij węzeł, aby połączyć</span>
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={() => endConnecting()}
-              className="h-6 w-6 p-0 text-white hover:bg-white/20"
-            >
-              <X className="h-3 w-3" />
-            </Button>
-          </motion.div>
-        )}
-        
+      {/* Floating Add Button */}
+      <div className="absolute top-4 right-4 z-10">
         <Button
           onClick={() => {
-            const x = (100 - pan.x) / zoom;
-            const y = (100 - pan.y) / zoom;
-            const nodeId = addNode(x, y);
+            const nodeId = addNode(100, 100);
             setSelectedNode(nodeId);
           }}
           className="bg-purple-600 hover:bg-purple-700 text-white shadow-lg"
@@ -375,59 +197,23 @@ export function MindMapCanvas() {
         </Button>
       </div>
 
-      {/* Zoom controls */}
-      <div className="absolute bottom-4 right-4 flex flex-col space-y-2">
-        <Button
-          size="sm"
-          variant="secondary"
-          onClick={() => setZoom(Math.min(zoom * 1.2, 3))}
-          className="w-10 h-10 p-0"
-        >
-          +
-        </Button>
-        <div className="text-center text-white text-xs bg-black/50 px-2 py-1 rounded">
-          {Math.round(zoom * 100)}%
-        </div>
-        <Button
-          size="sm"
-          variant="secondary"
-          onClick={() => setZoom(Math.max(zoom / 1.2, 0.1))}
-          className="w-10 h-10 p-0"
-        >
-          -
-        </Button>
-        <Button
-          size="sm"
-          variant="secondary"
-          onClick={() => {
-            setZoom(1);
-            setPan({ x: 0, y: 0 });
-          }}
-          className="w-10 h-10 p-0 text-xs"
-        >
-          ⌂
-        </Button>
-      </div>
-
       {/* Instructions */}
       {nodes.length === 0 && (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="absolute inset-0 flex items-center justify-center"
+          className="absolute inset-0 flex items-center justify-center z-10"
         >
           <div className="text-center text-gray-400 max-w-md">
             <h3 className="text-xl font-semibold mb-4 text-purple-300">Twoja mapa myśli</h3>
             <p className="text-sm leading-relaxed mb-6">
               Kliknij gdziekolwiek na płótnie, aby dodać nowy węzeł.
               Przeciągaj węzły, aby je przemieszczać.
-              Używaj przycisku łączenia, aby tworzyć relacje.
+              Przeciągnij od kropki do kropki, aby połączyć węzły.
             </p>
             <Button
               onClick={() => {
-                const x = (300 - pan.x) / zoom;
-                const y = (200 - pan.y) / zoom;
-                const nodeId = addNode(x, y);
+                const nodeId = addNode(0, 0);
                 setSelectedNode(nodeId);
               }}
               className="bg-purple-600 hover:bg-purple-700 text-white"
@@ -440,15 +226,22 @@ export function MindMapCanvas() {
       )}
 
       {/* Keyboard shortcuts help */}
-      <div className="absolute bottom-4 left-4 bg-black/50 backdrop-blur-sm text-white text-xs p-3 rounded-lg">
+      <div className="absolute bottom-4 left-4 bg-black/50 backdrop-blur-sm text-white text-xs p-3 rounded-lg z-10">
         <div className="space-y-1">
-          <div><kbd className="bg-white/20 px-1 rounded">ESC</kbd> - Anuluj / Odznacz</div>
-          <div><kbd className="bg-white/20 px-1 rounded">DEL</kbd> - Usuń węzeł</div>
           <div><kbd className="bg-white/20 px-1 rounded">Klik</kbd> - Dodaj węzeł</div>
-          <div><kbd className="bg-white/20 px-1 rounded">Scroll</kbd> - Zoom</div>
-          <div><kbd className="bg-white/20 px-1 rounded">Przeciągnij</kbd> - Przesuń mapę</div>
+          <div><kbd className="bg-white/20 px-1 rounded">Przeciągnij węzeł</kbd> - Przenieś</div>
+          <div><kbd className="bg-white/20 px-1 rounded">Przeciągnij kropkę</kbd> - Połącz</div>
+          <div><kbd className="bg-white/20 px-1 rounded">DEL</kbd> - Usuń wybrany węzeł</div>
         </div>
       </div>
     </div>
+  );
+}
+
+export function MindMapCanvas() {
+  return (
+    <ReactFlowProvider>
+      <MindMapCanvasInner />
+    </ReactFlowProvider>
   );
 }
