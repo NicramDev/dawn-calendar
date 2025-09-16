@@ -24,12 +24,64 @@ const defaultMindMap: MindMap = {
   createdAt: new Date()
 };
 
+// Migration function to convert old format to new format
+const migrateMindMap = (oldMap: any): MindMap => {
+  // If it's already in the new format, return as is
+  if (oldMap.nodes && !oldMap.data) {
+    return oldMap;
+  }
+  
+  // If it's in the old format, migrate it
+  if (oldMap.data) {
+    return {
+      id: oldMap.id,
+      name: oldMap.name,
+      nodes: (oldMap.data.nodes || []).map((node: any) => ({
+        id: node.id,
+        type: 'mindMapNode',
+        position: { x: node.x || 0, y: node.y || 0 },
+        data: {
+          title: node.title || 'Nowy węzeł',
+          content: node.content || '',
+          color: node.color || 'blue'
+        }
+      })),
+      edges: (oldMap.data.connections || []).map((conn: any) => ({
+        id: conn.id,
+        source: conn.from,
+        target: conn.to,
+        type: 'smoothstep',
+        animated: true,
+        style: { stroke: 'rgba(139, 92, 246, 0.8)', strokeWidth: 3 }
+      })),
+      createdAt: oldMap.createdAt || new Date()
+    };
+  }
+  
+  // Fallback to default structure
+  return {
+    id: oldMap.id || crypto.randomUUID(),
+    name: oldMap.name || 'Mapa myśli',
+    nodes: [],
+    edges: [],
+    createdAt: oldMap.createdAt || new Date()
+  };
+};
+
 export function useMindMap() {
-  const [mindMaps, setMindMaps] = useLocalStorage<MindMap[]>('mindMaps', [defaultMindMap]);
+  const [rawMindMaps, setRawMindMaps] = useLocalStorage<any[]>('mindMaps', [defaultMindMap]);
   const [currentMapId, setCurrentMapId] = useLocalStorage<string>('currentMapId', 'default');
   const [selectedNode, setSelectedNode] = useState<string | null>(null);
   
-  const currentMap = mindMaps.find(map => map.id === currentMapId) || mindMaps[0];
+  // Migrate and ensure proper data structure
+  const mindMaps = rawMindMaps.map(migrateMindMap);
+  
+  // Update localStorage with migrated data if needed
+  const setMindMaps = useCallback((updater: any) => {
+    setRawMindMaps(updater);
+  }, [setRawMindMaps]);
+  
+  const currentMap = mindMaps.find(map => map.id === currentMapId) || mindMaps[0] || defaultMindMap;
   const nodes = currentMap?.nodes || [];
   const edges = currentMap?.edges || [];
 

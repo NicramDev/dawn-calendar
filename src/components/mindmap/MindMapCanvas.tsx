@@ -160,7 +160,7 @@ function MindMapCanvasInner() {
                   <div className="flex items-center justify-between w-full">
                     <span>{map.name}</span>
                     <span className="text-xs text-muted-foreground ml-2">
-                      ({map.nodes.length} węzłów)
+                      ({(map.nodes || []).length} węzłów)
                     </span>
                   </div>
                 </SelectItem>
