@@ -55,56 +55,72 @@ function ReactFlowMindMapNode({ id, data, selected, onUpdate, onDelete, isConnec
         delay: Math.random() * 0.2 
       }}
     >
-      {/* Connection handles - source and target for each side */}
+      {/* Connection handles - source and target for each side; fixed, no hover movement */}
       <Handle
         type="source"
         position={Position.Top}
         id="top-s"
+        isConnectableStart={true}
+        isConnectableEnd={true}
         className="!w-4 !h-4 !bg-white !border-2 !border-current !rounded-full"
       />
       <Handle
         type="target"
         position={Position.Top}
         id="top-t"
+        isConnectableStart={true}
+        isConnectableEnd={true}
         className="!w-4 !h-4 !bg-white !border-2 !border-current !rounded-full"
       />
-      
+
       <Handle
         type="source"
         position={Position.Right}
         id="right-s"
+        isConnectableStart={true}
+        isConnectableEnd={true}
         className="!w-4 !h-4 !bg-white !border-2 !border-current !rounded-full"
       />
       <Handle
         type="target"
         position={Position.Right}
         id="right-t"
+        isConnectableStart={true}
+        isConnectableEnd={true}
         className="!w-4 !h-4 !bg-white !border-2 !border-current !rounded-full"
       />
-      
+
       <Handle
         type="source"
         position={Position.Bottom}
         id="bottom-s"
+        isConnectableStart={true}
+        isConnectableEnd={true}
         className="!w-4 !h-4 !bg-white !border-2 !border-current !rounded-full"
       />
       <Handle
         type="target"
         position={Position.Bottom}
         id="bottom-t"
+        isConnectableStart={true}
+        isConnectableEnd={true}
         className="!w-4 !h-4 !bg-white !border-2 !border-current !rounded-full"
       />
-      
+
       <Handle
         type="source"
         position={Position.Left}
         id="left-s"
+        isConnectableStart={true}
+        isConnectableEnd={true}
         className="!w-4 !h-4 !bg-white !border-2 !border-current !rounded-full"
       />
       <Handle
         type="target"
         position={Position.Left}
         id="left-t"
+        isConnectableStart={true}
+        isConnectableEnd={true}
         className="!w-4 !h-4 !bg-white !border-2 !border-current !rounded-full"
       />
 
