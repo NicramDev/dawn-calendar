@@ -11,7 +11,8 @@ import ReactFlow, {
   MiniMap,
   useReactFlow,
   ReactFlowProvider,
-  NodeProps
+  NodeProps,
+  ConnectionMode,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 import { useMindMap, MindMapNodeData } from '@/hooks/useMindMap';
@@ -98,10 +99,10 @@ function MindMapCanvasInner() {
         onNodeClick={(_, node) => setSelectedNode(node.id)}
         onSelectionChange={({ nodes }) => setSelectedNode(nodes[0]?.id ?? null)}
         nodeTypes={nodeTypes}
+        connectionMode={ConnectionMode.Strict}
         panOnDrag
         selectionOnDrag={false}
         zoomOnScroll
-        zoomOnPinch
         connectionLineStyle={{
           stroke: 'rgba(139, 92, 246, 0.8)',
           strokeWidth: 3,

@@ -1,10 +1,11 @@
 import { useState, memo } from 'react';
 import { Handle, Position, NodeProps } from 'reactflow';
 import { motion } from 'framer-motion';
-import { Edit3, Trash2, X } from 'lucide-react';
+import { Edit3, Trash2, Palette } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { MindMapNodeData } from '@/hooks/useMindMap';
 import { cn } from '@/lib/utils';
 
@@ -21,7 +22,7 @@ interface ReactFlowMindMapNodeProps extends NodeProps<MindMapNodeData> {
   onDelete?: (id: string) => void;
 }
 
-function ReactFlowMindMapNode({ id, data, selected, onUpdate, onDelete }: ReactFlowMindMapNodeProps) {
+function ReactFlowMindMapNode({ id, data, selected, onUpdate, onDelete, isConnectable }: ReactFlowMindMapNodeProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [title, setTitle] = useState(data.title);
   const [content, setContent] = useState(data.content);
@@ -54,25 +55,33 @@ function ReactFlowMindMapNode({ id, data, selected, onUpdate, onDelete }: ReactF
         delay: Math.random() * 0.2 
       }}
     >
-      {/* Connection Handles */}
+      {/* Source Handles */}
       <Handle
         type="source"
         position={Position.Top}
+        id="s-top"
+        isConnectable={isConnectable}
         className="w-3 h-3 bg-white border-2 border-current shadow-lg hover:scale-110 transition-transform"
       />
       <Handle
         type="source"
         position={Position.Right}
+        id="s-right"
+        isConnectable={isConnectable}
         className="w-3 h-3 bg-white border-2 border-current shadow-lg hover:scale-110 transition-transform"
       />
       <Handle
         type="source"
         position={Position.Bottom}
+        id="s-bottom"
+        isConnectable={isConnectable}
         className="w-3 h-3 bg-white border-2 border-current shadow-lg hover:scale-110 transition-transform"
       />
       <Handle
         type="source"
         position={Position.Left}
+        id="s-left"
+        isConnectable={isConnectable}
         className="w-3 h-3 bg-white border-2 border-current shadow-lg hover:scale-110 transition-transform"
       />
       
@@ -80,21 +89,29 @@ function ReactFlowMindMapNode({ id, data, selected, onUpdate, onDelete }: ReactF
       <Handle
         type="target"
         position={Position.Top}
+        id="t-top"
+        isConnectable={isConnectable}
         className="w-3 h-3 bg-white border-2 border-current shadow-lg hover:scale-110 transition-transform"
       />
       <Handle
         type="target"
         position={Position.Right}
+        id="t-right"
+        isConnectable={isConnectable}
         className="w-3 h-3 bg-white border-2 border-current shadow-lg hover:scale-110 transition-transform"
       />
       <Handle
         type="target"
         position={Position.Bottom}
+        id="t-bottom"
+        isConnectable={isConnectable}
         className="w-3 h-3 bg-white border-2 border-current shadow-lg hover:scale-110 transition-transform"
       />
       <Handle
         type="target"
         position={Position.Left}
+        id="t-left"
+        isConnectable={isConnectable}
         className="w-3 h-3 bg-white border-2 border-current shadow-lg hover:scale-110 transition-transform"
       />
 
@@ -153,6 +170,43 @@ function ReactFlowMindMapNode({ id, data, selected, onUpdate, onDelete }: ReactF
                 >
                   <Edit3 className="h-3 w-3" />
                 </Button>
+
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={(e) => e.stopPropagation()}
+                      className="h-6 w-6 p-0 hover:bg-white/20 text-inherit"
+                      aria-label="Zmień kolor"
+                    >
+                      <Palette className="h-3 w-3" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="center" sideOffset={4} className="p-2">
+                    <div className="flex gap-2">
+                      {(['blue','purple','green','orange','pink'] as const).map((c) => (
+                        <button
+                          key={c}
+                          onClick={(e) => { e.stopPropagation(); onUpdate?.(id, { color: c }); }}
+                          className={cn(
+                            'h-5 w-5 rounded-full border-2 ring-offset-1',
+                            {
+                              blue: 'bg-blue-500 border-blue-300',
+                              purple: 'bg-purple-500 border-purple-300',
+                              green: 'bg-green-500 border-green-300',
+                              orange: 'bg-orange-500 border-orange-300',
+                              pink: 'bg-pink-500 border-pink-300',
+                            }[c],
+                            data.color === c ? 'ring-2 ring-white' : 'ring-0'
+                          )}
+                          aria-label={`Zmień kolor na ${c}`}
+                        />
+                      ))}
+                    </div>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+
                 <Button
                   size="sm"
                   variant="ghost"
