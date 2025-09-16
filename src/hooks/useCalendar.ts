@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { CalendarEvent, CalendarView, EventColor } from '@/types/calendar';
 import { useLocalStorage } from './useLocalStorage';
 import { 
@@ -23,12 +23,55 @@ export const useCalendar = () => {
   const [view, setView] = useState<CalendarView>('month');
   const [searchQuery, setSearchQuery] = useState('');
 
+  // Clear corrupted data on first load if needed
+  const clearCorruptedData = () => {
+    try {
+      const stored = localStorage.getItem('calendar-events');
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        const hasInvalidDates = parsed.some((event: any) => {
+          try {
+            const date = new Date(event.date || event.startTime);
+            return isNaN(date.getTime());
+          } catch {
+            return true;
+          }
+        });
+        
+        if (hasInvalidDates) {
+          console.log('Clearing corrupted calendar data...');
+          localStorage.removeItem('calendar-events');
+          window.location.reload();
+        }
+      }
+    } catch (error) {
+      console.warn('Error checking localStorage, clearing:', error);
+      localStorage.removeItem('calendar-events');
+      window.location.reload();
+    }
+  };
+
+  // Run cleanup once on mount
+  useEffect(() => {
+    clearCorruptedData();
+  }, []);
+
   // Convert stored events back to proper Date objects
   const parsedEvents = useMemo(() => {
-    return events.map(event => ({
-      ...event,
-      date: new Date(event.date)
-    }));
+    return events.map(event => {
+      try {
+        const date = new Date(event.date);
+        // Check if date is valid
+        if (isNaN(date.getTime())) {
+          console.warn('Invalid date found, using current date:', event);
+          return { ...event, date: new Date() };
+        }
+        return { ...event, date };
+      } catch (error) {
+        console.warn('Error parsing date, using current date:', event, error);
+        return { ...event, date: new Date() };
+      }
+    });
   }, [events]);
 
   // Filter events based on search query

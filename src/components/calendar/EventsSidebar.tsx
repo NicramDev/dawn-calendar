@@ -22,21 +22,40 @@ export const EventsSidebar = ({
   className
 }: EventsSidebarProps) => {
   const formatEventDate = (date: Date) => {
-    if (isToday(date)) return 'Dziś';
-    if (isTomorrow(date)) return 'Jutro';
-    if (isYesterday(date)) return 'Wczoraj';
-    return format(date, 'EEE, d MMM', { locale: pl });
+    try {
+      if (!date || isNaN(date.getTime())) {
+        return 'Invalid Date';
+      }
+      
+      if (isToday(date)) return 'Dziś';
+      if (isTomorrow(date)) return 'Jutro';
+      if (isYesterday(date)) return 'Wczoraj';
+      return format(date, 'EEE, d MMM', { locale: pl });
+    } catch (error) {
+      console.warn('Error formatting date:', date, error);
+      return 'Invalid Date';
+    }
   };
 
   const groupEventsByDate = (events: CalendarEvent[]) => {
     const groups: { [key: string]: CalendarEvent[] } = {};
     
     events.forEach(event => {
-      const dateKey = format(event.date, 'yyyy-MM-dd');
-      if (!groups[dateKey]) {
-        groups[dateKey] = [];
+      try {
+        // Ensure we have a valid date
+        if (!event.date || isNaN(new Date(event.date).getTime())) {
+          console.warn('Skipping event with invalid date:', event);
+          return;
+        }
+        
+        const dateKey = format(event.date, 'yyyy-MM-dd');
+        if (!groups[dateKey]) {
+          groups[dateKey] = [];
+        }
+        groups[dateKey].push(event);
+      } catch (error) {
+        console.warn('Error processing event date:', event, error);
       }
-      groups[dateKey].push(event);
     });
 
     // Sort events within each group by title
