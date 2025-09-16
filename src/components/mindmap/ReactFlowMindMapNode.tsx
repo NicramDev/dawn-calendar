@@ -55,38 +55,30 @@ function ReactFlowMindMapNode({ id, data, selected, onUpdate, onDelete, isConnec
         delay: Math.random() * 0.2 
       }}
     >
-      {/* Connection Handles - one per side */}
+      {/* Connection Handles - simplified, one per side */}
       <Handle
         type="source"
         position={Position.Top}
         id="top"
-        isConnectable={true}
-        className="w-3 h-3 bg-white border-2 border-current shadow-lg hover:scale-110 transition-transform"
-        style={{ left: '50%', top: -6 }}
+        className="!w-4 !h-4 !bg-white !border-2 !border-current hover:scale-110 transition-transform"
       />
       <Handle
         type="source"
         position={Position.Right}
         id="right"
-        isConnectable={true}
-        className="w-3 h-3 bg-white border-2 border-current shadow-lg hover:scale-110 transition-transform"
-        style={{ right: -6, top: '50%' }}
+        className="!w-4 !h-4 !bg-white !border-2 !border-current hover:scale-110 transition-transform"
       />
       <Handle
         type="source"
         position={Position.Bottom}
         id="bottom"
-        isConnectable={true}
-        className="w-3 h-3 bg-white border-2 border-current shadow-lg hover:scale-110 transition-transform"
-        style={{ left: '50%', bottom: -6 }}
+        className="!w-4 !h-4 !bg-white !border-2 !border-current hover:scale-110 transition-transform"
       />
       <Handle
         type="source"
         position={Position.Left}
         id="left"
-        isConnectable={true}
-        className="w-3 h-3 bg-white border-2 border-current shadow-lg hover:scale-110 transition-transform"
-        style={{ left: -6, top: '50%' }}
+        className="!w-4 !h-4 !bg-white !border-2 !border-current hover:scale-110 transition-transform"
       />
 
       <div className="p-3 flex flex-col h-full">
