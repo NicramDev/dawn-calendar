@@ -1,100 +1,106 @@
-import { useState, useEffect } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Loader2, Mail, Lock } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
+const CORRECT_CODE = '1602';
+
 export default function Auth() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [code, setCode] = useState(['', '', '', '']);
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
+  const inputRefs = [useRef<HTMLInputElement>(null), useRef<HTMLInputElement>(null), useRef<HTMLInputElement>(null), useRef<HTMLInputElement>(null)];
 
-  // Redirect if already authenticated
+  // Check if already authenticated
   useEffect(() => {
-    const checkUser = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        navigate('/');
-      }
-    };
-    checkUser();
+    const isAuthenticated = localStorage.getItem('app_authenticated') === 'true';
+    if (isAuthenticated) {
+      navigate('/');
+    }
   }, [navigate]);
 
-  const handleSignUp = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!email || !password) {
-      setError('Wszystkie pola są wymagane');
-      return;
-    }
+  // Focus first input on mount
+  useEffect(() => {
+    inputRefs[0].current?.focus();
+  }, []);
 
-    setLoading(true);
+  const handleInputChange = (index: number, value: string) => {
+    // Only allow single digits
+    if (value.length > 1) return;
+    if (value && !/^\d$/.test(value)) return;
+
+    const newCode = [...code];
+    newCode[index] = value;
+    setCode(newCode);
     setError('');
 
-    try {
-      const { error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          emailRedirectTo: `${window.location.origin}/`
-        }
-      });
+    // Auto-focus next input
+    if (value && index < 3) {
+      inputRefs[index + 1].current?.focus();
+    }
 
-      if (error) throw error;
-
-      toast({
-        title: "Sukces",
-        description: "Sprawdź swoją skrzynkę e-mail w celu potwierdzenia konta",
-      });
-    } catch (error: any) {
-      setError(error.message || 'Wystąpił błąd podczas rejestracji');
-    } finally {
-      setLoading(false);
+    // Check code when all fields are filled
+    if (newCode.every(digit => digit !== '')) {
+      checkCode(newCode.join(''));
     }
   };
 
-  const handleSignIn = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!email || !password) {
-      setError('Wszystkie pola są wymagane');
-      return;
-    }
-
-    setLoading(true);
-    setError('');
-
-    try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
-      if (error) throw error;
-
-      toast({
-        title: "Sukces",
-        description: "Pomyślnie zalogowano",
-      });
-      
-      navigate('/');
-    } catch (error: any) {
-      if (error.message.includes('Invalid login credentials')) {
-        setError('Nieprawidłowy email lub hasło');
-      } else if (error.message.includes('Email not confirmed')) {
-        setError('Potwierdź swoje konto przez email przed zalogowaniem');
+  const handleKeyDown = (index: number, e: React.KeyboardEvent) => {
+    // Handle backspace
+    if (e.key === 'Backspace') {
+      if (code[index] === '' && index > 0) {
+        // Move to previous input if current is empty
+        inputRefs[index - 1].current?.focus();
       } else {
-        setError(error.message || 'Wystąpił błąd podczas logowania');
+        // Clear current input
+        const newCode = [...code];
+        newCode[index] = '';
+        setCode(newCode);
       }
-    } finally {
-      setLoading(false);
     }
+    // Handle paste
+    else if (e.key === 'v' && (e.ctrlKey || e.metaKey)) {
+      e.preventDefault();
+      navigator.clipboard.readText().then(text => {
+        const digits = text.replace(/\D/g, '').slice(0, 4);
+        if (digits.length === 4) {
+          const newCode = digits.split('');
+          setCode(newCode);
+          checkCode(digits);
+        }
+      });
+    }
+  };
+
+  const checkCode = async (inputCode: string) => {
+    setLoading(true);
+    
+    // Simulate loading delay
+    await new Promise(resolve => setTimeout(resolve, 500));
+
+    if (inputCode === CORRECT_CODE) {
+      localStorage.setItem('app_authenticated', 'true');
+      toast({
+        title: "Dostęp przyznany",
+        description: "Witaj w SKUULY!",
+      });
+      navigate('/');
+    } else {
+      setError('Nieprawidłowy kod dostępu');
+      setCode(['', '', '', '']);
+      inputRefs[0].current?.focus();
+    }
+    
+    setLoading(false);
+  };
+
+  const clearCode = () => {
+    setCode(['', '', '', '']);
+    setError('');
+    inputRefs[0].current?.focus();
   };
 
   return (
@@ -103,134 +109,73 @@ export default function Auth() {
         <CardHeader className="text-center">
           <CardTitle className="text-2xl font-bold text-primary">SKUULY</CardTitle>
           <CardDescription>
-            Zaloguj się lub utwórz konto, aby zsynchronizować swoje dane
+            Wprowadź kod dostępu do aplikacji
           </CardDescription>
         </CardHeader>
-        <CardContent>
-          <Tabs defaultValue="signin" className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="signin">Logowanie</TabsTrigger>
-              <TabsTrigger value="signup">Rejestracja</TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="signin">
-              <form onSubmit={handleSignIn} className="space-y-4">
-                <div className="space-y-2">
-                  <label htmlFor="email" className="text-sm font-medium">
-                    Email
-                  </label>
-                  <div className="relative">
-                    <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      id="email"
-                      type="email"
-                      placeholder="twoj@email.com"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      className="pl-10"
-                      disabled={loading}
-                    />
-                  </div>
-                </div>
-                
-                <div className="space-y-2">
-                  <label htmlFor="password" className="text-sm font-medium">
-                    Hasło
-                  </label>
-                  <div className="relative">
-                    <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      id="password"
-                      type="password"
-                      placeholder="••••••••"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      className="pl-10"
-                      disabled={loading}
-                    />
-                  </div>
-                </div>
+        <CardContent className="space-y-6">
+          {/* Code Input */}
+          <div className="space-y-4">
+            <div className="flex justify-center space-x-3">
+              {code.map((digit, index) => (
+                <input
+                  key={index}
+                  ref={inputRefs[index]}
+                  type="text"
+                  inputMode="numeric"
+                  maxLength={1}
+                  value={digit}
+                  onChange={(e) => handleInputChange(index, e.target.value)}
+                  onKeyDown={(e) => handleKeyDown(index, e)}
+                  className={`w-12 h-12 text-center text-xl font-semibold border-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary transition-colors ${
+                    error 
+                      ? 'border-destructive focus:border-destructive focus:ring-destructive/20' 
+                      : 'border-input focus:border-primary'
+                  } ${
+                    digit 
+                      ? 'bg-primary/5 border-primary' 
+                      : 'bg-background'
+                  } ${
+                    loading 
+                      ? 'opacity-50 cursor-not-allowed' 
+                      : ''
+                  }`}
+                  disabled={loading}
+                />
+              ))}
+            </div>
 
-                {error && (
-                  <Alert variant="destructive">
-                    <AlertDescription>{error}</AlertDescription>
-                  </Alert>
-                )}
+            {/* Loading indicator */}
+            {loading && (
+              <div className="flex justify-center">
+                <div className="animate-spin rounded-full h-6 w-6 border-2 border-primary border-t-transparent"></div>
+              </div>
+            )}
 
-                <Button type="submit" className="w-full" disabled={loading}>
-                  {loading ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Logowanie...
-                    </>
-                  ) : (
-                    'Zaloguj się'
-                  )}
-                </Button>
-              </form>
-            </TabsContent>
+            {/* Error message */}
+            {error && (
+              <Alert variant="destructive">
+                <AlertDescription className="text-center">{error}</AlertDescription>
+              </Alert>
+            )}
 
-            <TabsContent value="signup">
-              <form onSubmit={handleSignUp} className="space-y-4">
-                <div className="space-y-2">
-                  <label htmlFor="signup-email" className="text-sm font-medium">
-                    Email
-                  </label>
-                  <div className="relative">
-                    <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      id="signup-email"
-                      type="email"
-                      placeholder="twoj@email.com"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      className="pl-10"
-                      disabled={loading}
-                    />
-                  </div>
-                </div>
-                
-                <div className="space-y-2">
-                  <label htmlFor="signup-password" className="text-sm font-medium">
-                    Hasło
-                  </label>
-                  <div className="relative">
-                    <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      id="signup-password"
-                      type="password"
-                      placeholder="••••••••"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      className="pl-10"
-                      disabled={loading}
-                      minLength={6}
-                    />
-                  </div>
-                  <p className="text-sm text-muted-foreground">
-                    Hasło musi mieć minimum 6 znaków
-                  </p>
-                </div>
+            {/* Clear button */}
+            {code.some(digit => digit !== '') && !loading && (
+              <div className="flex justify-center">
+                <button
+                  onClick={clearCode}
+                  className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  Wyczyść kod
+                </button>
+              </div>
+            )}
+          </div>
 
-                {error && (
-                  <Alert variant="destructive">
-                    <AlertDescription>{error}</AlertDescription>
-                  </Alert>
-                )}
-
-                <Button type="submit" className="w-full" disabled={loading}>
-                  {loading ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Rejestracja...
-                    </>
-                  ) : (
-                    'Utwórz konto'
-                  )}
-                </Button>
-              </form>
-            </TabsContent>
-          </Tabs>
+          {/* Instructions */}
+          <div className="text-center text-sm text-muted-foreground space-y-2">
+            <p>Wprowadź 4-cyfrowy kod dostępu</p>
+            <p className="text-xs">Możesz także wkleić kod (Ctrl+V)</p>
+          </div>
         </CardContent>
       </Card>
     </div>

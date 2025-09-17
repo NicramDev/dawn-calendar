@@ -1,6 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
 import { CalendarEvent, CalendarView, EventColor } from '@/types/calendar';
-import { supabase } from '@/integrations/supabase/client';
 import { 
   format, 
   addDays, 
@@ -26,27 +25,19 @@ export const useCalendar = () => {
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
-  // Load events from Supabase
-  const loadEvents = async () => {
+  // Load events from localStorage
+  const loadEvents = () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
-        .from('calendar_events')
-        .select('*')
-        .order('planned_date', { ascending: true });
-
-      if (error) throw error;
-
-      const mappedEvents = data.map(event => ({
-        id: event.id,
-        title: event.title,
-        description: event.description,
-        dueDate: new Date(event.due_date),
-        plannedDate: new Date(event.planned_date),
-        color: event.color as EventColor
-      }));
-
-      setEvents(mappedEvents);
+      const stored = localStorage.getItem('calendar-events');
+      if (stored) {
+        const parsedEvents = JSON.parse(stored).map((event: any) => ({
+          ...event,
+          dueDate: new Date(event.dueDate),
+          plannedDate: new Date(event.plannedDate)
+        }));
+        setEvents(parsedEvents);
+      }
     } catch (error) {
       console.error('Error loading events:', error);
       toast({
@@ -59,16 +50,23 @@ export const useCalendar = () => {
     }
   };
 
-  // Load events on mount and auth state change
+  // Save events to localStorage
+  const saveEvents = (events: CalendarEvent[]) => {
+    try {
+      localStorage.setItem('calendar-events', JSON.stringify(events));
+    } catch (error) {
+      console.error('Error saving events:', error);
+      toast({
+        title: "Błąd",
+        description: "Nie można zapisać wydarzeń",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Load events on mount
   useEffect(() => {
     loadEvents();
-
-    // Listen for auth state changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {
-      loadEvents();
-    });
-
-    return () => subscription.unsubscribe();
   }, []);
 
   // Filter events based on search query
@@ -113,43 +111,17 @@ export const useCalendar = () => {
     return eachDayOfInterval({ start: calendarStart, end: calendarEnd });
   }, [currentDate, view]);
 
-  const addEvent = async (event: Omit<CalendarEvent, 'id'>) => {
+  const addEvent = (event: Omit<CalendarEvent, 'id'>) => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        toast({
-          title: "Błąd",
-          description: "Musisz być zalogowany",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      const { data, error } = await supabase
-        .from('calendar_events')
-        .insert([{
-          user_id: user.id,
-          title: event.title,
-          description: event.description,
-          due_date: event.dueDate.toISOString(),
-          planned_date: event.plannedDate.toISOString(),
-          color: event.color
-        }])
-        .select()
-        .single();
-
-      if (error) throw error;
-
       const newEvent: CalendarEvent = {
-        id: data.id,
-        title: data.title,
-        description: data.description,
-        dueDate: new Date(data.due_date),
-        plannedDate: new Date(data.planned_date),
-        color: data.color as EventColor
+        ...event,
+        id: crypto.randomUUID()
       };
-
-      setEvents(prev => [...prev, newEvent]);
+      
+      const updatedEvents = [...events, newEvent];
+      setEvents(updatedEvents);
+      saveEvents(updatedEvents);
+      
       toast({
         title: "Sukces",
         description: "Wydarzenie zostało dodane",
@@ -164,25 +136,13 @@ export const useCalendar = () => {
     }
   };
 
-  const updateEvent = async (id: string, updates: Partial<CalendarEvent>) => {
+  const updateEvent = (id: string, updates: Partial<CalendarEvent>) => {
     try {
-      const updateData: any = {};
-      if (updates.title !== undefined) updateData.title = updates.title;
-      if (updates.description !== undefined) updateData.description = updates.description;
-      if (updates.dueDate !== undefined) updateData.due_date = updates.dueDate.toISOString();
-      if (updates.plannedDate !== undefined) updateData.planned_date = updates.plannedDate.toISOString();
-      if (updates.color !== undefined) updateData.color = updates.color;
-
-      const { error } = await supabase
-        .from('calendar_events')
-        .update(updateData)
-        .eq('id', id);
-
-      if (error) throw error;
-
-      setEvents(prev => prev.map(event => 
+      const updatedEvents = events.map(event => 
         event.id === id ? { ...event, ...updates } : event
-      ));
+      );
+      setEvents(updatedEvents);
+      saveEvents(updatedEvents);
 
       toast({
         title: "Sukces",
@@ -198,16 +158,12 @@ export const useCalendar = () => {
     }
   };
 
-  const deleteEvent = async (id: string) => {
+  const deleteEvent = (id: string) => {
     try {
-      const { error } = await supabase
-        .from('calendar_events')
-        .delete()
-        .eq('id', id);
-
-      if (error) throw error;
-
-      setEvents(prev => prev.filter(event => event.id !== id));
+      const updatedEvents = events.filter(event => event.id !== id);
+      setEvents(updatedEvents);
+      saveEvents(updatedEvents);
+      
       toast({
         title: "Sukces",
         description: "Wydarzenie zostało usunięte",

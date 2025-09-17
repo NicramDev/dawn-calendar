@@ -3,7 +3,6 @@ import { X, Calendar as CalendarIcon, Brain, Settings, LogOut } from 'lucide-rea
 import { Button } from '@/components/ui/button';
 import { AppTab } from '@/hooks/useAppState';
 import { cn } from '@/lib/utils';
-import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
 interface AppSidebarProps {
@@ -37,23 +36,9 @@ const tabs = [
 export function AppSidebar({ isOpen, activeTab, onClose, onTabChange }: AppSidebarProps) {
   const { toast } = useToast();
 
-  const handleLogout = async () => {
-    try {
-      const { error } = await supabase.auth.signOut();
-      if (error) throw error;
-      
-      toast({
-        title: "Sukces",
-        description: "Pomyślnie wylogowano",
-      });
-    } catch (error) {
-      console.error('Logout error:', error);
-      toast({
-        title: "Błąd",
-        description: "Nie można wylogować",
-        variant: "destructive",
-      });
-    }
+  const handleLogout = () => {
+    localStorage.removeItem('app_authenticated');
+    window.location.reload(); // Reload to redirect to auth page
   };
   return (
     <AnimatePresence>
