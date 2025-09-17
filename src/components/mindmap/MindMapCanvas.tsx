@@ -67,14 +67,16 @@ function MindMapCanvasInner() {
     }
   };
 
-  const handlePaneClick = useCallback((event: React.MouseEvent) => {
+  const handlePaneClick = useCallback(async (event: React.MouseEvent) => {
     const position = screenToFlowPosition({
       x: event.clientX,
       y: event.clientY,
     });
     
-    const nodeId = addNode(position.x - 100, position.y - 50);
-    setSelectedNode(nodeId);
+    const nodeId = await addNode(position.x - 100, position.y - 50);
+    if (nodeId) {
+      setSelectedNode(nodeId);
+    }
   }, [addNode, setSelectedNode, screenToFlowPosition]);
 
   useEffect(() => {
@@ -211,9 +213,11 @@ function MindMapCanvasInner() {
       {/* Floating Add Button */}
       <div className="absolute top-4 right-4 z-10">
         <Button
-          onClick={() => {
-            const nodeId = addNode(100, 100);
-            setSelectedNode(nodeId);
+          onClick={async () => {
+            const nodeId = await addNode(100, 100);
+            if (nodeId) {
+              setSelectedNode(nodeId);
+            }
           }}
           className="bg-purple-600 hover:bg-purple-700 text-white shadow-lg"
           size="sm"
@@ -238,9 +242,11 @@ function MindMapCanvasInner() {
               Przeciągnij od kropki do kropki, aby połączyć węzły.
             </p>
             <Button
-              onClick={() => {
-                const nodeId = addNode(0, 0);
-                setSelectedNode(nodeId);
+              onClick={async () => {
+                const nodeId = await addNode(0, 0);
+                if (nodeId) {
+                  setSelectedNode(nodeId);
+                }
               }}
               className="bg-purple-600 hover:bg-purple-700 text-white"
             >

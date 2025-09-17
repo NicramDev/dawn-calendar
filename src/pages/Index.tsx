@@ -1,4 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
 import { useCalendar } from '@/hooks/useCalendar';
 import { useAppState } from '@/hooks/useAppState';
 import { CalendarHeader } from '@/components/calendar/CalendarHeader';
@@ -11,8 +13,12 @@ import { MindMapCanvas } from '@/components/mindmap/MindMapCanvas';
 import { Settings } from '@/pages/Settings';
 import { CalendarEvent } from '@/types/calendar';
 import { motion } from 'framer-motion';
+import { Loader2 } from 'lucide-react';
 
 const Index = () => {
+  const [authLoading, setAuthLoading] = useState(true);
+  const [user, setUser] = useState(null);
+  const navigate = useNavigate();
   const { activeTab, sidebarOpen, toggleSidebar, setActiveTab } = useAppState();
   const {
     events,
@@ -35,6 +41,51 @@ const Index = () => {
   const [showEventModal, setShowEventModal] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | undefined>();
   const [selectedDate, setSelectedDate] = useState<Date | undefined>();
+
+  // Check authentication
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) {
+          navigate('/auth');
+          return;
+        }
+        setUser(session.user);
+      } catch (error) {
+        console.error('Auth check error:', error);
+        navigate('/auth');
+      } finally {
+        setAuthLoading(false);
+      }
+    };
+
+    checkAuth();
+
+    // Listen for auth state changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_OUT' || !session) {
+        navigate('/auth');
+      } else if (session) {
+        setUser(session.user);
+        setAuthLoading(false);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [navigate]);
+
+  // Show loading spinner while checking auth
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-subtle flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-primary" />
+          <p className="text-muted-foreground">Ładowanie...</p>
+        </div>
+      </div>
+    );
+  }
 
   const handleDateClick = (date: Date) => {
     setSelectedDate(date);

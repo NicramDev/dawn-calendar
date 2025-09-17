@@ -1,8 +1,10 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Calendar as CalendarIcon, Brain, Settings } from 'lucide-react';
+import { X, Calendar as CalendarIcon, Brain, Settings, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { AppTab } from '@/hooks/useAppState';
 import { cn } from '@/lib/utils';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
 interface AppSidebarProps {
   isOpen: boolean;
@@ -33,6 +35,26 @@ const tabs = [
 ];
 
 export function AppSidebar({ isOpen, activeTab, onClose, onTabChange }: AppSidebarProps) {
+  const { toast } = useToast();
+
+  const handleLogout = async () => {
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+      
+      toast({
+        title: "Sukces",
+        description: "Pomyślnie wylogowano",
+      });
+    } catch (error) {
+      console.error('Logout error:', error);
+      toast({
+        title: "Błąd",
+        description: "Nie można wylogować",
+        variant: "destructive",
+      });
+    }
+  };
   return (
     <AnimatePresence>
       {isOpen && (
@@ -130,11 +152,19 @@ export function AppSidebar({ isOpen, activeTab, onClose, onTabChange }: AppSideb
 
               {/* Footer */}
               <motion.div 
-                className="p-6 border-t border-sidebar-border"
+                className="p-6 border-t border-sidebar-border space-y-4"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.4 }}
               >
+                <Button
+                  variant="outline"
+                  className="w-full justify-start text-sidebar-foreground border-sidebar-border hover:bg-sidebar-accent"
+                  onClick={handleLogout}
+                >
+                  <LogOut className="h-4 w-4 mr-2" />
+                  Wyloguj się
+                </Button>
                 <p className="text-xs text-sidebar-foreground/60 text-center">
                   SKUULY - Kalendarz & Mapa myśli
                 </p>

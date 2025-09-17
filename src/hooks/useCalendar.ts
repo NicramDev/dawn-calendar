@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from 'react';
 import { CalendarEvent, CalendarView, EventColor } from '@/types/calendar';
-import { useLocalStorage } from './useLocalStorage';
+import { supabase } from '@/integrations/supabase/client';
 import { 
   format, 
   addDays, 
@@ -16,102 +16,70 @@ import {
   endOfDay
 } from 'date-fns';
 import { pl } from 'date-fns/locale';
+import { useToast } from '@/hooks/use-toast';
 
 export const useCalendar = () => {
-  const [events, setEvents] = useLocalStorage<CalendarEvent[]>('calendar-events', []);
+  const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [currentDate, setCurrentDate] = useState(new Date());
   const [view, setView] = useState<CalendarView>('month');
   const [searchQuery, setSearchQuery] = useState('');
+  const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
 
-  // Clear corrupted data on first load if needed
-  const clearCorruptedData = () => {
+  // Load events from Supabase
+  const loadEvents = async () => {
     try {
-      const stored = localStorage.getItem('calendar-events');
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        const hasInvalidDates = parsed.some((event: any) => {
-          try {
-            // Check for old single date field or new dual date fields
-            const dueDate = new Date(event.dueDate || event.date);
-            const plannedDate = new Date(event.plannedDate || event.date);
-            return isNaN(dueDate.getTime()) || isNaN(plannedDate.getTime());
-          } catch {
-            return true;
-          }
-        });
-        
-        if (hasInvalidDates) {
-          console.log('Clearing corrupted calendar data...');
-          localStorage.removeItem('calendar-events');
-          window.location.reload();
-        }
-      }
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('calendar_events')
+        .select('*')
+        .order('planned_date', { ascending: true });
+
+      if (error) throw error;
+
+      const mappedEvents = data.map(event => ({
+        id: event.id,
+        title: event.title,
+        description: event.description,
+        dueDate: new Date(event.due_date),
+        plannedDate: new Date(event.planned_date),
+        color: event.color as EventColor
+      }));
+
+      setEvents(mappedEvents);
     } catch (error) {
-      console.warn('Error checking localStorage, clearing:', error);
-      localStorage.removeItem('calendar-events');
-      window.location.reload();
+      console.error('Error loading events:', error);
+      toast({
+        title: "Błąd",
+        description: "Nie można załadować wydarzeń",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
     }
   };
 
-  // Run cleanup once on mount
+  // Load events on mount and auth state change
   useEffect(() => {
-    clearCorruptedData();
-  }, []);
+    loadEvents();
 
-  // Convert stored events back to proper Date objects
-  const parsedEvents = useMemo(() => {
-    return events.map(event => {
-      try {
-        // Handle migration from old single 'date' field to new dueDate/plannedDate structure
-        const legacyEvent = event as any;
-        if (legacyEvent.date && !event.dueDate) {
-          return {
-            id: event.id,
-            title: event.title,
-            description: event.description,
-            color: event.color,
-            dueDate: new Date(legacyEvent.date),
-            plannedDate: new Date(legacyEvent.date)
-          };
-        }
-        
-        const dueDate = new Date(event.dueDate);
-        const plannedDate = new Date(event.plannedDate);
-        
-        // Check if dates are valid
-        if (isNaN(dueDate.getTime()) || isNaN(plannedDate.getTime())) {
-          console.warn('Invalid dates found, using current date:', event);
-          return { 
-            ...event, 
-            dueDate: new Date(),
-            plannedDate: new Date()
-          };
-        }
-        return { 
-          ...event, 
-          dueDate,
-          plannedDate
-        };
-      } catch (error) {
-        console.warn('Error parsing dates, using current date:', event, error);
-        return { 
-          ...event, 
-          dueDate: new Date(),
-          plannedDate: new Date()
-        };
-      }
+    // Listen for auth state changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {
+      loadEvents();
     });
-  }, [events]);
+
+    return () => subscription.unsubscribe();
+  }, []);
 
   // Filter events based on search query
   const filteredEvents = useMemo(() => {
-    if (!searchQuery.trim()) return parsedEvents;
+    if (!searchQuery.trim()) return events;
     
-    return parsedEvents.filter(event => 
+    return events.filter(event => 
       event.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       event.description?.toLowerCase().includes(searchQuery.toLowerCase())
     );
-  }, [parsedEvents, searchQuery]);
+  }, [events, searchQuery]);
 
   // Get events for current view
   const viewEvents = useMemo(() => {
@@ -145,22 +113,113 @@ export const useCalendar = () => {
     return eachDayOfInterval({ start: calendarStart, end: calendarEnd });
   }, [currentDate, view]);
 
-  const addEvent = (event: Omit<CalendarEvent, 'id'>) => {
-    const newEvent: CalendarEvent = {
-      ...event,
-      id: crypto.randomUUID()
-    };
-    setEvents(prev => [...prev, newEvent]);
+  const addEvent = async (event: Omit<CalendarEvent, 'id'>) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast({
+          title: "Błąd",
+          description: "Musisz być zalogowany",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from('calendar_events')
+        .insert([{
+          user_id: user.id,
+          title: event.title,
+          description: event.description,
+          due_date: event.dueDate.toISOString(),
+          planned_date: event.plannedDate.toISOString(),
+          color: event.color
+        }])
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      const newEvent: CalendarEvent = {
+        id: data.id,
+        title: data.title,
+        description: data.description,
+        dueDate: new Date(data.due_date),
+        plannedDate: new Date(data.planned_date),
+        color: data.color as EventColor
+      };
+
+      setEvents(prev => [...prev, newEvent]);
+      toast({
+        title: "Sukces",
+        description: "Wydarzenie zostało dodane",
+      });
+    } catch (error) {
+      console.error('Error adding event:', error);
+      toast({
+        title: "Błąd",
+        description: "Nie można dodać wydarzenia",
+        variant: "destructive",
+      });
+    }
   };
 
-  const updateEvent = (id: string, updates: Partial<CalendarEvent>) => {
-    setEvents(prev => prev.map(event => 
-      event.id === id ? { ...event, ...updates } : event
-    ));
+  const updateEvent = async (id: string, updates: Partial<CalendarEvent>) => {
+    try {
+      const updateData: any = {};
+      if (updates.title !== undefined) updateData.title = updates.title;
+      if (updates.description !== undefined) updateData.description = updates.description;
+      if (updates.dueDate !== undefined) updateData.due_date = updates.dueDate.toISOString();
+      if (updates.plannedDate !== undefined) updateData.planned_date = updates.plannedDate.toISOString();
+      if (updates.color !== undefined) updateData.color = updates.color;
+
+      const { error } = await supabase
+        .from('calendar_events')
+        .update(updateData)
+        .eq('id', id);
+
+      if (error) throw error;
+
+      setEvents(prev => prev.map(event => 
+        event.id === id ? { ...event, ...updates } : event
+      ));
+
+      toast({
+        title: "Sukces",
+        description: "Wydarzenie zostało zaktualizowane",
+      });
+    } catch (error) {
+      console.error('Error updating event:', error);
+      toast({
+        title: "Błąd",
+        description: "Nie można zaktualizować wydarzenia",
+        variant: "destructive",
+      });
+    }
   };
 
-  const deleteEvent = (id: string) => {
-    setEvents(prev => prev.filter(event => event.id !== id));
+  const deleteEvent = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('calendar_events')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+
+      setEvents(prev => prev.filter(event => event.id !== id));
+      toast({
+        title: "Sukces",
+        description: "Wydarzenie zostało usunięte",
+      });
+    } catch (error) {
+      console.error('Error deleting event:', error);
+      toast({
+        title: "Błąd",
+        description: "Nie można usunąć wydarzenia",
+        variant: "destructive",
+      });
+    }
   };
 
   const getEventsForDay = (date: Date) => {
@@ -190,6 +249,7 @@ export const useCalendar = () => {
     currentDate,
     view,
     searchQuery,
+    loading,
     setView,
     setSearchQuery,
     addEvent,
