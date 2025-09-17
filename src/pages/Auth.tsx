@@ -104,40 +104,40 @@ export default function Auth() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 flex items-center justify-center p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
-          <CardTitle className="text-2xl font-bold text-primary">SKUULY</CardTitle>
-          <CardDescription>
+    <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 flex items-center justify-center p-4 sm:p-6">
+      <Card className="w-full max-w-sm mx-auto">
+        <CardHeader className="text-center pb-6">
+          <CardTitle className="text-3xl sm:text-4xl font-bold text-primary mb-2">SKUULY</CardTitle>
+          <CardDescription className="text-base sm:text-lg">
             Wprowadź kod dostępu do aplikacji
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-6">
+        <CardContent className="space-y-8 px-6 pb-8">
           {/* Code Input */}
-          <div className="space-y-4">
-            <div className="flex justify-center space-x-3">
+          <div className="space-y-6">
+            <div className="flex justify-center gap-3 sm:gap-4">
               {code.map((digit, index) => (
                 <input
                   key={index}
                   ref={inputRefs[index]}
-                  type="text"
+                  type="password"
                   inputMode="numeric"
                   maxLength={1}
                   value={digit}
                   onChange={(e) => handleInputChange(index, e.target.value)}
                   onKeyDown={(e) => handleKeyDown(index, e)}
-                  className={`w-12 h-12 text-center text-xl font-semibold border-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary transition-colors ${
+                  className={`w-14 h-14 sm:w-16 sm:h-16 text-center text-2xl sm:text-3xl font-bold border-2 rounded-xl focus:outline-none focus:ring-4 focus:ring-primary/20 transition-all duration-200 ${
                     error 
-                      ? 'border-destructive focus:border-destructive focus:ring-destructive/20' 
+                      ? 'border-destructive focus:border-destructive focus:ring-destructive/20 bg-destructive/5' 
                       : 'border-input focus:border-primary'
                   } ${
                     digit 
-                      ? 'bg-primary/5 border-primary' 
-                      : 'bg-background'
+                      ? 'bg-primary/10 border-primary shadow-sm' 
+                      : 'bg-background hover:bg-muted/30'
                   } ${
                     loading 
                       ? 'opacity-50 cursor-not-allowed' 
-                      : ''
+                      : 'cursor-text'
                   }`}
                   disabled={loading}
                 />
