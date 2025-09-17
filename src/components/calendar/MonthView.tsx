@@ -4,6 +4,7 @@ import { CalendarEvent } from '@/types/calendar';
 import { eventColors } from '@/hooks/useCalendar';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface MonthViewProps {
   calendarDays: Date[];
@@ -21,6 +22,7 @@ export const MonthView = ({
   onEventClick
 }: MonthViewProps) => {
   const weekDays = ['Pon', 'Wt', 'Śr', 'Czw', 'Pt', 'Sob', 'Ndz'];
+  const isMobile = useIsMobile();
 
   const getEventsForDay = (date: Date) => {
     return events.filter(event => isSameDay(event.plannedDate, date));
@@ -33,7 +35,7 @@ export const MonthView = ({
         {weekDays.map((day) => (
           <div
             key={day}
-            className="p-3 text-sm font-medium text-muted-foreground text-center"
+            className="p-1 sm:p-3 text-xs sm:text-sm font-medium text-muted-foreground text-center"
           >
             {day}
           </div>
@@ -51,7 +53,7 @@ export const MonthView = ({
             <motion.div
               key={day.toISOString()}
               className={cn(
-                "min-h-[120px] border-r border-b border-border bg-background hover:bg-muted/30 transition-colors cursor-pointer relative",
+                "min-h-[80px] sm:min-h-[120px] border-r border-b border-border bg-background hover:bg-muted/30 transition-colors cursor-pointer relative",
                 !isCurrentMonth && "bg-muted/20 text-muted-foreground"
               )}
               onClick={() => onDateClick(day)}
@@ -61,10 +63,10 @@ export const MonthView = ({
               whileHover={{ scale: 1.02 }}
             >
               {/* Day number */}
-              <div className="p-2">
+              <div className="p-1 sm:p-2">
                 <div
                   className={cn(
-                    "w-8 h-8 flex items-center justify-center text-sm font-medium rounded-full transition-colors",
+                    "w-6 h-6 sm:w-8 sm:h-8 flex items-center justify-center text-xs sm:text-sm font-medium rounded-full transition-colors",
                     isDayToday && "bg-calendar-today-bg text-calendar-today font-bold",
                     !isDayToday && isCurrentMonth && "text-foreground",
                     !isDayToday && !isCurrentMonth && "text-muted-foreground"
@@ -75,14 +77,14 @@ export const MonthView = ({
               </div>
 
               {/* Events */}
-              <div className="px-2 pb-2 space-y-1">
-                {dayEvents.slice(0, 3).map((event) => {
+              <div className="px-1 sm:px-2 pb-1 sm:pb-2 space-y-0.5 sm:space-y-1">
+                {dayEvents.slice(0, isMobile ? 4 : 3).map((event) => {
                   const colors = eventColors[event.color];
                   return (
                     <motion.div
                       key={event.id}
                       className={cn(
-                        "px-2 py-1 rounded text-xs font-medium truncate cursor-pointer shadow-sm",
+                        "px-1 sm:px-2 py-0.5 sm:py-1 rounded text-[10px] sm:text-xs font-medium truncate cursor-pointer shadow-sm",
                         colors.bg,
                         colors.text,
                         "hover:shadow-event transition-shadow"
@@ -97,16 +99,16 @@ export const MonthView = ({
                       transition={{ duration: 0.2 }}
                     >
                       <div className="flex items-center gap-1">
-                        <div className={cn("w-2 h-2 rounded-full flex-shrink-0", colors.text.replace('text-', 'bg-'))} />
+                        <div className={cn("w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full flex-shrink-0", colors.text.replace('text-', 'bg-'))} />
                         <span className="truncate">{event.title}</span>
                       </div>
                     </motion.div>
                   );
                 })}
                 
-                {dayEvents.length > 3 && (
-                  <div className="px-2 py-1 text-xs text-muted-foreground">
-                    +{dayEvents.length - 3} więcej
+                {dayEvents.length > (isMobile ? 4 : 3) && (
+                  <div className="px-1 sm:px-2 py-0.5 sm:py-1 text-[10px] sm:text-xs text-muted-foreground">
+                    +{dayEvents.length - (isMobile ? 4 : 3)} więcej
                   </div>
                 )}
               </div>
