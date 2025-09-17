@@ -24,7 +24,6 @@ export type Database = {
           planned_date: string
           title: string
           updated_at: string
-          user_id: string
         }
         Insert: {
           color: string
@@ -35,7 +34,6 @@ export type Database = {
           planned_date: string
           title: string
           updated_at?: string
-          user_id: string
         }
         Update: {
           color?: string
@@ -46,7 +44,6 @@ export type Database = {
           planned_date?: string
           title?: string
           updated_at?: string
-          user_id?: string
         }
         Relationships: []
       }
@@ -57,7 +54,6 @@ export type Database = {
           mind_map_id: string
           source: string
           target: string
-          user_id: string
         }
         Insert: {
           created_at?: string
@@ -65,7 +61,6 @@ export type Database = {
           mind_map_id: string
           source: string
           target: string
-          user_id: string
         }
         Update: {
           created_at?: string
@@ -73,7 +68,6 @@ export type Database = {
           mind_map_id?: string
           source?: string
           target?: string
-          user_id?: string
         }
         Relationships: [
           {
@@ -97,7 +91,6 @@ export type Database = {
           title: string
           type: string
           updated_at: string
-          user_id: string
         }
         Insert: {
           color?: string
@@ -110,7 +103,6 @@ export type Database = {
           title?: string
           type?: string
           updated_at?: string
-          user_id: string
         }
         Update: {
           color?: string
@@ -123,7 +115,6 @@ export type Database = {
           title?: string
           type?: string
           updated_at?: string
-          user_id?: string
         }
         Relationships: [
           {
@@ -141,21 +132,18 @@ export type Database = {
           id: string
           name: string
           updated_at: string
-          user_id: string
         }
         Insert: {
           created_at?: string
           id?: string
           name: string
           updated_at?: string
-          user_id: string
         }
         Update: {
           created_at?: string
           id?: string
           name?: string
           updated_at?: string
-          user_id?: string
         }
         Relationships: []
       }
