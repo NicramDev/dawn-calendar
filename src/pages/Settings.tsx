@@ -4,7 +4,7 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Trash2, Download, Upload } from 'lucide-react';
-import { useLocalStorage } from '@/hooks/useLocalStorage';
+import { useState, useEffect } from 'react';
 
 const nodeColors = [
   { name: 'Niebieski', value: 'blue', color: 'bg-blue-500' },
@@ -15,7 +15,20 @@ const nodeColors = [
 ];
 
 export function Settings() {
-  const [selectedNodeColor, setSelectedNodeColor] = useLocalStorage('selectedNodeColor', 'blue');
+  const [selectedNodeColor, setSelectedNodeColor] = useState('blue');
+
+  // Load selected color from localStorage on mount
+  useEffect(() => {
+    const saved = localStorage.getItem('selectedNodeColor');
+    if (saved) {
+      setSelectedNodeColor(saved);
+    }
+  }, []);
+
+  // Save selected color to localStorage when it changes
+  useEffect(() => {
+    localStorage.setItem('selectedNodeColor', selectedNodeColor);
+  }, [selectedNodeColor]);
   const handleExportData = () => {
     const data = {
       events: localStorage.getItem('calendar-events') || '[]',
