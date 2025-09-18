@@ -78,7 +78,7 @@ export const EventsSidebar = ({
   const sortedDateKeys = Object.keys(eventGroups).sort();
 
   return (
-    <div className={cn("lg:w-80 bg-gradient-card border-border flex flex-col", className)}>
+    <div className={cn("w-full bg-gradient-card border-border flex flex-col", className)}>
       {/* Header */}
       <div className="p-4 border-b border-border">
         <div className="flex items-center justify-between mb-4">

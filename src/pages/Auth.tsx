@@ -14,13 +14,10 @@ export default function Auth() {
   const { toast } = useToast();
   const inputRefs = [useRef<HTMLInputElement>(null), useRef<HTMLInputElement>(null), useRef<HTMLInputElement>(null), useRef<HTMLInputElement>(null)];
 
-  // Check if already authenticated
+  // Always clear authentication on auth page load
   useEffect(() => {
-    const isAuthenticated = localStorage.getItem('app_authenticated') === 'true';
-    if (isAuthenticated) {
-      navigate('/');
-    }
-  }, [navigate]);
+    localStorage.removeItem('app_authenticated');
+  }, []);
 
   // Focus first input on mount
   useEffect(() => {

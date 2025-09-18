@@ -41,15 +41,13 @@ const Index = () => {
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | undefined>();
   const [selectedDate, setSelectedDate] = useState<Date | undefined>();
 
-  // Check authentication
+  // Check authentication - require PIN on every page load
   useEffect(() => {
     const checkAuth = () => {
-      const isAuthenticated = localStorage.getItem('app_authenticated') === 'true';
-      if (!isAuthenticated) {
-        navigate('/auth');
-        return;
-      }
-      setAuthLoading(false);
+      // Clear any previous authentication
+      localStorage.removeItem('app_authenticated');
+      // Always redirect to auth page
+      navigate('/auth');
     };
 
     checkAuth();
@@ -151,8 +149,8 @@ const Index = () => {
                 )}
               </motion.div>
 
-              {/* Mobile Layout - Full screen calendar and list below */}
-              <div className="flex lg:hidden flex-col flex-1 overflow-hidden">
+              {/* Mobile Layout - Scrollable calendar and list */}
+              <div className="flex lg:hidden flex-col flex-1 overflow-auto">
                 <motion.div 
                   className="flex-shrink-0"
                   initial={{ x: -50, opacity: 0 }}
@@ -160,7 +158,7 @@ const Index = () => {
                   transition={{ duration: 0.4 }}
                 >
                   {view === 'month' && (
-                    <div className="h-[50vh] overflow-hidden">
+                    <div className="min-h-[60vh] overflow-visible">
                       <MonthView
                         calendarDays={calendarDays}
                         currentDate={currentDate}
@@ -172,7 +170,7 @@ const Index = () => {
                   )}
                   
                   {view === 'week' && (
-                    <div className="h-[50vh] flex items-center justify-center bg-background">
+                    <div className="min-h-[60vh] flex items-center justify-center bg-background">
                       <div className="text-center text-muted-foreground">
                         <h3 className="text-lg font-medium mb-2">Widok tygodniowy</h3>
                         <p>W przygotowaniu...</p>
@@ -181,7 +179,7 @@ const Index = () => {
                   )}
                   
                   {view === 'day' && (
-                    <div className="h-[50vh] flex items-center justify-center bg-background">
+                    <div className="min-h-[60vh] flex items-center justify-center bg-background">
                       <div className="text-center text-muted-foreground">
                         <h3 className="text-lg font-medium mb-2">Widok dzienny</h3>
                         <p>W przygotowaniu...</p>
@@ -195,7 +193,7 @@ const Index = () => {
                   initial={{ y: 50, opacity: 0 }}
                   animate={{ y: 0, opacity: 1 }}
                   transition={{ duration: 0.4, delay: 0.2 }}
-                  className="flex-1 overflow-hidden"
+                  className="min-h-[50vh] flex-shrink-0"
                 >
                   <EventsSidebar
                     events={events}
@@ -213,7 +211,7 @@ const Index = () => {
                 initial={{ x: 50, opacity: 0 }}
                 animate={{ x: 0, opacity: 1 }}
                 transition={{ duration: 0.4, delay: 0.1 }}
-                className="hidden lg:block"
+                className="hidden lg:block w-80 flex-shrink-0"
               >
                 <EventsSidebar
                   events={events}
@@ -221,6 +219,7 @@ const Index = () => {
                   onAddEvent={handleAddEvent}
                   onMoveEvent={handleMoveEvent}
                   onToggleCompleted={toggleEventCompleted}
+                  className="h-full"
                 />
               </motion.div>
             </div>
@@ -277,7 +276,7 @@ const Index = () => {
         </div>
 
         {/* Main Content */}
-        <div className="flex-1 overflow-hidden">
+        <div className="flex-1 overflow-hidden relative">
           {renderActiveTab()}
         </div>
 
