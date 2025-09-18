@@ -22,7 +22,35 @@ serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Pobierz zadania na jutro (planned_date)
+    // Sprawdź aktualna godzinę i minutę
+    const now = new Date();
+    const currentHour = now.getHours();
+    const currentMinute = now.getMinutes();
+    
+    console.log(`Current time: ${currentHour}:${currentMinute.toString().padStart(2, '0')}`);
+
+    // Pobierz użytkowników, którzy mają ustawioną przypominkę na tę godzinę
+    const { data: userSettings, error: settingsError } = await supabase
+      .from('user_settings')
+      .select('user_id')
+      .eq('reminder_hour', currentHour)
+      .eq('reminder_minute', currentMinute);
+
+    if (settingsError) {
+      console.error('Error fetching user settings:', settingsError);
+      throw settingsError;
+    }
+
+    console.log(`Found ${userSettings?.length || 0} users with reminders set for ${currentHour}:${currentMinute.toString().padStart(2, '0')}`);
+
+    if (!userSettings || userSettings.length === 0) {
+      console.log('No users have reminders set for this time, skipping notification');
+      return new Response(JSON.stringify({ message: 'No users with reminders for this time' }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Pobierz zadania na jutro (planned_date) dla wszystkich użytkowników
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
     tomorrow.setHours(0, 0, 0, 0);
@@ -110,6 +138,7 @@ serve(async (req) => {
     return new Response(JSON.stringify({ 
       success: true, 
       eventsCount: events.length,
+      usersWithReminders: userSettings.length,
       message: 'Reminder sent successfully'
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Trash2, Download, Upload, Clock } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { appConfig } from '@/config/app';
+import { supabase } from '@/integrations/supabase/client';
 
 const nodeColors = [
   { name: 'Niebieski', value: 'blue', color: 'bg-blue-500' },
@@ -21,28 +22,64 @@ export function Settings() {
   const [reminderHour, setReminderHour] = useState<number>(appConfig.reminderHour);
   const [reminderMinute, setReminderMinute] = useState<number>(appConfig.reminderMinute);
 
-  // Load selected color from localStorage on mount
+  // Load selected color and reminder settings on mount
   useEffect(() => {
     const saved = localStorage.getItem('selectedNodeColor');
     if (saved) {
       setSelectedNodeColor(saved);
     }
     
-    const savedHour = localStorage.getItem('reminderHour');
-    const savedMinute = localStorage.getItem('reminderMinute');
-    if (savedHour) setReminderHour(parseInt(savedHour));
-    if (savedMinute) setReminderMinute(parseInt(savedMinute));
+    // Load reminder settings from Supabase
+    loadReminderSettings();
   }, []);
+
+  const loadReminderSettings = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('user_settings')
+        .select('reminder_hour, reminder_minute')
+        .single();
+      
+      if (error && error.code !== 'PGRST116') { // PGRST116 = no rows found
+        console.error('Error loading reminder settings:', error);
+        return;
+      }
+      
+      if (data) {
+        setReminderHour(data.reminder_hour);
+        setReminderMinute(data.reminder_minute);
+      }
+    } catch (error) {
+      console.error('Error loading reminder settings:', error);
+    }
+  };
+
+  const saveReminderSettings = async (hour: number, minute: number) => {
+    try {
+      const { error } = await supabase
+        .from('user_settings')
+        .upsert({
+          user_id: (await supabase.auth.getUser()).data.user?.id,
+          reminder_hour: hour,
+          reminder_minute: minute
+        });
+      
+      if (error) {
+        console.error('Error saving reminder settings:', error);
+      }
+    } catch (error) {
+      console.error('Error saving reminder settings:', error);
+    }
+  };
 
   // Save selected color to localStorage when it changes
   useEffect(() => {
     localStorage.setItem('selectedNodeColor', selectedNodeColor);
   }, [selectedNodeColor]);
 
-  // Save reminder time to localStorage when it changes
+  // Save reminder time to Supabase when it changes
   useEffect(() => {
-    localStorage.setItem('reminderHour', reminderHour.toString());
-    localStorage.setItem('reminderMinute', reminderMinute.toString());
+    saveReminderSettings(reminderHour, reminderMinute);
   }, [reminderHour, reminderMinute]);
   const handleExportData = () => {
     const data = {
