@@ -18,7 +18,7 @@ serve(async (req) => {
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const discordWebhookUrl = Deno.env.get('DISCORD_WEBHOOK_URL')!;
+    const discordWebhookUrl = 'https://discord.com/api/webhooks/1418301679924936754/nowEObDqAj16uUivQlD52y34KdPiUcPSD1fOZfN8RA0vSzJN6A864zit0G64RKNga-eV';
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
