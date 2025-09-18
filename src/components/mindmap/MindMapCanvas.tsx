@@ -79,23 +79,7 @@ function MindMapCanvasInner() {
     }
   }, [addNode, setSelectedNode, screenToFlowPosition]);
 
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      // Don't delete node if user is currently editing text (input/textarea focused)
-      const activeElement = document.activeElement as HTMLElement;
-      const isEditingText = activeElement && (
-        activeElement.tagName === 'INPUT' || 
-        activeElement.tagName === 'TEXTAREA' ||
-        activeElement.contentEditable === 'true'
-      );
-      
-      if ((e.key === 'Delete' || e.key === 'Backspace') && selectedNode && !isEditingText) {
-        deleteNode(selectedNode);
-      }
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [selectedNode, deleteNode]);
+  // Removed keyboard deletion - nodes can only be deleted via button
 
   return (
     <div className="relative w-full h-full bg-gray-900">
@@ -112,7 +96,6 @@ function MindMapCanvasInner() {
         connectionMode={ConnectionMode.Loose}
         isValidConnection={() => true}
         connectOnClick={false}
-        deleteKeyCode={['Delete', 'Backspace']}
         panOnDrag
         selectionOnDrag={false}
         zoomOnScroll
@@ -271,7 +254,6 @@ function MindMapCanvasInner() {
           <div><kbd className="bg-white/20 px-1 rounded">Klik</kbd> - Dodaj węzeł</div>
           <div><kbd className="bg-white/20 px-1 rounded">Przeciągnij węzeł</kbd> - Przenieś</div>
           <div><kbd className="bg-white/20 px-1 rounded">Przeciągnij kropkę</kbd> - Połącz</div>
-          <div><kbd className="bg-white/20 px-1 rounded">DEL</kbd> - Usuń wybrany węzeł</div>
         </div>
       </div>
     </div>
