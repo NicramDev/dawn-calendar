@@ -29,10 +29,10 @@ serve(async (req) => {
     
     console.log(`Current time: ${currentHour}:${currentMinute.toString().padStart(2, '0')}`);
 
-    // Pobierz użytkowników, którzy mają ustawioną przypominkę na tę godzinę
+    // Pobierz ustawienia użytkowników, którzy mają ustawioną przypominkę na tę godzinę
     const { data: userSettings, error: settingsError } = await supabase
       .from('user_settings')
-      .select('user_id')
+      .select('session_id')
       .eq('reminder_hour', currentHour)
       .eq('reminder_minute', currentMinute);
 
@@ -41,11 +41,11 @@ serve(async (req) => {
       throw settingsError;
     }
 
-    console.log(`Found ${userSettings?.length || 0} users with reminders set for ${currentHour}:${currentMinute.toString().padStart(2, '0')}`);
+    console.log(`Found ${userSettings?.length || 0} sessions with reminders set for ${currentHour}:${currentMinute.toString().padStart(2, '0')}`);
 
     if (!userSettings || userSettings.length === 0) {
-      console.log('No users have reminders set for this time, skipping notification');
-      return new Response(JSON.stringify({ message: 'No users with reminders for this time' }), {
+      console.log('No sessions have reminders set for this time, skipping notification');
+      return new Response(JSON.stringify({ message: 'No sessions with reminders for this time' }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
@@ -112,7 +112,7 @@ serve(async (req) => {
     });
 
     message += '||@here||\n\n';
-    message += '-# przypomnienie wysyłane codziennie o 18:00';
+    message += '-# przypomnienie wysyłane codziennie o ustawionej godzinie';
 
     console.log('Sending Discord message:', message);
 
@@ -138,7 +138,7 @@ serve(async (req) => {
     return new Response(JSON.stringify({ 
       success: true, 
       eventsCount: events.length,
-      usersWithReminders: userSettings.length,
+      sessionsWithReminders: userSettings.length,
       message: 'Reminder sent successfully'
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

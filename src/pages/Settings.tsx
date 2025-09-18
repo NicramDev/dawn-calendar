@@ -33,11 +33,22 @@ export function Settings() {
     loadReminderSettings();
   }, []);
 
+  const getSessionId = () => {
+    let sessionId = localStorage.getItem('session_id');
+    if (!sessionId) {
+      sessionId = 'session_' + Math.random().toString(36).substr(2, 9);
+      localStorage.setItem('session_id', sessionId);
+    }
+    return sessionId;
+  };
+
   const loadReminderSettings = async () => {
     try {
+      const sessionId = getSessionId();
       const { data, error } = await supabase
         .from('user_settings')
         .select('reminder_hour, reminder_minute')
+        .eq('session_id', sessionId)
         .single();
       
       if (error && error.code !== 'PGRST116') { // PGRST116 = no rows found
@@ -56,16 +67,19 @@ export function Settings() {
 
   const saveReminderSettings = async (hour: number, minute: number) => {
     try {
+      const sessionId = getSessionId();
       const { error } = await supabase
         .from('user_settings')
         .upsert({
-          user_id: (await supabase.auth.getUser()).data.user?.id,
+          session_id: sessionId,
           reminder_hour: hour,
           reminder_minute: minute
         });
       
       if (error) {
         console.error('Error saving reminder settings:', error);
+      } else {
+        console.log('Reminder settings saved successfully:', { hour, minute, sessionId });
       }
     } catch (error) {
       console.error('Error saving reminder settings:', error);

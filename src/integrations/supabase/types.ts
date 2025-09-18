@@ -156,24 +156,27 @@ export type Database = {
           id: string
           reminder_hour: number
           reminder_minute: number
+          session_id: string | null
           updated_at: string
-          user_id: string
+          user_id: string | null
         }
         Insert: {
           created_at?: string
           id?: string
           reminder_hour?: number
           reminder_minute?: number
+          session_id?: string | null
           updated_at?: string
-          user_id: string
+          user_id?: string | null
         }
         Update: {
           created_at?: string
           id?: string
           reminder_hour?: number
           reminder_minute?: number
+          session_id?: string | null
           updated_at?: string
-          user_id?: string
+          user_id?: string | null
         }
         Relationships: []
       }
