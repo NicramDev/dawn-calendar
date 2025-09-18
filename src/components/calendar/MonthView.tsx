@@ -85,8 +85,8 @@ export const MonthView = ({
                       key={event.id}
                       className={cn(
                         "px-1 sm:px-2 py-0.5 sm:py-1 rounded text-[10px] sm:text-xs font-medium truncate cursor-pointer shadow-sm",
-                        colors.bg,
-                        colors.text,
+                        event.completed ? "bg-muted/50 text-muted-foreground" : colors.bg,
+                        event.completed ? "text-muted-foreground" : colors.text,
                         "hover:shadow-event transition-shadow"
                       )}
                       onClick={(e) => {
@@ -99,8 +99,11 @@ export const MonthView = ({
                       transition={{ duration: 0.2 }}
                     >
                       <div className="flex items-center gap-1">
-                        <div className={cn("w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full flex-shrink-0", colors.text.replace('text-', 'bg-'))} />
-                        <span className="truncate">{event.title}</span>
+                        <div className={cn(
+                          "w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full flex-shrink-0", 
+                          event.completed ? "bg-muted-foreground" : colors.text.replace('text-', 'bg-')
+                        )} />
+                        <span className={cn("truncate", event.completed && "line-through")}>{event.title}</span>
                       </div>
                     </motion.div>
                   );
