@@ -115,8 +115,9 @@ const Index = () => {
 
             {/* Main calendar content */}
             <div className="flex flex-1 overflow-hidden">
+              {/* Desktop Layout */}
               <motion.div 
-                className="flex flex-col flex-1 overflow-hidden"
+                className="hidden lg:flex flex-col flex-1 overflow-hidden"
                 initial={{ x: -50, opacity: 0 }}
                 animate={{ x: 0, opacity: 1 }}
                 transition={{ duration: 0.4 }}
@@ -150,7 +151,64 @@ const Index = () => {
                 )}
               </motion.div>
 
-              {/* Calendar Events Sidebar */}
+              {/* Mobile Layout - Full screen calendar and list below */}
+              <div className="flex lg:hidden flex-col flex-1 overflow-hidden">
+                <motion.div 
+                  className="flex-shrink-0"
+                  initial={{ x: -50, opacity: 0 }}
+                  animate={{ x: 0, opacity: 1 }}
+                  transition={{ duration: 0.4 }}
+                >
+                  {view === 'month' && (
+                    <div className="h-[50vh] overflow-hidden">
+                      <MonthView
+                        calendarDays={calendarDays}
+                        currentDate={currentDate}
+                        events={viewEvents}
+                        onDateClick={handleDateClick}
+                        onEventClick={handleEventClick}
+                      />
+                    </div>
+                  )}
+                  
+                  {view === 'week' && (
+                    <div className="h-[50vh] flex items-center justify-center bg-background">
+                      <div className="text-center text-muted-foreground">
+                        <h3 className="text-lg font-medium mb-2">Widok tygodniowy</h3>
+                        <p>W przygotowaniu...</p>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {view === 'day' && (
+                    <div className="h-[50vh] flex items-center justify-center bg-background">
+                      <div className="text-center text-muted-foreground">
+                        <h3 className="text-lg font-medium mb-2">Widok dzienny</h3>
+                        <p>W przygotowaniu...</p>
+                      </div>
+                    </div>
+                  )}
+                </motion.div>
+
+                {/* Mobile Events List */}
+                <motion.div
+                  initial={{ y: 50, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ duration: 0.4, delay: 0.2 }}
+                  className="flex-1 overflow-hidden"
+                >
+                  <EventsSidebar
+                    events={events}
+                    onEventClick={handleEventClick}
+                    onAddEvent={handleAddEvent}
+                    onMoveEvent={handleMoveEvent}
+                    onToggleCompleted={toggleEventCompleted}
+                    className="w-full h-full border-l-0 border-t"
+                  />
+                </motion.div>
+              </div>
+
+              {/* Desktop Sidebar */}
               <motion.div
                 initial={{ x: 50, opacity: 0 }}
                 animate={{ x: 0, opacity: 1 }}
@@ -163,23 +221,6 @@ const Index = () => {
                   onAddEvent={handleAddEvent}
                   onMoveEvent={handleMoveEvent}
                   onToggleCompleted={toggleEventCompleted}
-                />
-              </motion.div>
-              
-              {/* Mobile Events List */}
-              <motion.div
-                initial={{ y: 50, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ duration: 0.4, delay: 0.2 }}
-                className="block lg:hidden"
-              >
-                <EventsSidebar
-                  events={events}
-                  onEventClick={handleEventClick}
-                  onAddEvent={handleAddEvent}
-                  onMoveEvent={handleMoveEvent}
-                  onToggleCompleted={toggleEventCompleted}
-                  className="w-full border-l-0 border-t"
                 />
               </motion.div>
             </div>

@@ -59,9 +59,16 @@ export const EventsSidebar = ({
       groups[dateKey].push(event);
     });
 
-    // Sort events within each group by title
+    // Sort events within each group - completed tasks go to bottom
     Object.keys(groups).forEach(dateKey => {
-      groups[dateKey].sort((a, b) => a.title.localeCompare(b.title));
+      groups[dateKey].sort((a, b) => {
+        // First sort by completion status (incomplete first)
+        if (a.completed !== b.completed) {
+          return a.completed ? 1 : -1;
+        }
+        // Then sort by title
+        return a.title.localeCompare(b.title);
+      });
     });
 
     return groups;
@@ -137,7 +144,8 @@ export const EventsSidebar = ({
                             "p-3 rounded-lg border transition-all shadow-sm hover:shadow-event",
                             colors.bg,
                             colors.border,
-                            "hover:scale-[1.02] active:scale-[0.98]"
+                            "hover:scale-[1.02] active:scale-[0.98]",
+                            event.completed && "opacity-50 bg-muted/20"
                           )}
                           initial={{ opacity: 0, x: -20 }}
                           animate={{ opacity: 1, x: 0 }}
