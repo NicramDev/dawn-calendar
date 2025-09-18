@@ -41,13 +41,15 @@ const Index = () => {
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | undefined>();
   const [selectedDate, setSelectedDate] = useState<Date | undefined>();
 
-  // Check authentication - require PIN on every page load
+  // Check authentication - require PIN on every page refresh
   useEffect(() => {
     const checkAuth = () => {
-      // Clear any previous authentication
-      localStorage.removeItem('app_authenticated');
-      // Always redirect to auth page
-      navigate('/auth');
+      const isAuthenticated = sessionStorage.getItem('app_authenticated') === 'true';
+      if (!isAuthenticated) {
+        navigate('/auth');
+        return;
+      }
+      setAuthLoading(false);
     };
 
     checkAuth();

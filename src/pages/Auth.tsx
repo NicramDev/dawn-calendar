@@ -14,10 +14,13 @@ export default function Auth() {
   const { toast } = useToast();
   const inputRefs = [useRef<HTMLInputElement>(null), useRef<HTMLInputElement>(null), useRef<HTMLInputElement>(null), useRef<HTMLInputElement>(null)];
 
-  // Always clear authentication on auth page load
+  // Check if already authenticated in this session
   useEffect(() => {
-    localStorage.removeItem('app_authenticated');
-  }, []);
+    const isAuthenticated = sessionStorage.getItem('app_authenticated') === 'true';
+    if (isAuthenticated) {
+      navigate('/');
+    }
+  }, [navigate]);
 
   // Focus first input on mount
   useEffect(() => {
@@ -79,7 +82,7 @@ export default function Auth() {
     await new Promise(resolve => setTimeout(resolve, 500));
 
     if (inputCode === CORRECT_CODE) {
-      localStorage.setItem('app_authenticated', 'true');
+      sessionStorage.setItem('app_authenticated', 'true');
       toast({
         title: "Dostęp przyznany",
         description: "Witaj w SKUULY!",
