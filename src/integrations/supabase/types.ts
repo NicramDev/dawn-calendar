@@ -17,6 +17,7 @@ export type Database = {
       calendar_events: {
         Row: {
           color: string
+          completed: boolean
           created_at: string
           description: string | null
           due_date: string
@@ -27,6 +28,7 @@ export type Database = {
         }
         Insert: {
           color: string
+          completed?: boolean
           created_at?: string
           description?: string | null
           due_date: string
@@ -37,6 +39,7 @@ export type Database = {
         }
         Update: {
           color?: string
+          completed?: boolean
           created_at?: string
           description?: string | null
           due_date?: string

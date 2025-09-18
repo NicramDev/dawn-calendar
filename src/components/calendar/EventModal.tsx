@@ -65,7 +65,8 @@ export const EventModal = ({
       description: description.trim(),
       dueDate: dueDate,
       plannedDate: plannedDate,
-      color
+      color,
+      completed: false
     };
 
     if (isEditing && event && onUpdate) {

@@ -5,6 +5,7 @@ export interface CalendarEvent {
   dueDate: Date; // Na kiedy jest
   plannedDate: Date; // Kiedy zamierzam zrobić
   color: EventColor;
+  completed: boolean;
 }
 
 export type EventColor = 'blue' | 'pink' | 'green' | 'purple' | 'orange' | 'yellow';

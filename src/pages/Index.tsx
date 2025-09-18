@@ -30,6 +30,7 @@ const Index = () => {
     addEvent,
     updateEvent,
     deleteEvent,
+    toggleEventCompleted,
     getEventsForDay,
     navigateDate,
     goToToday,
@@ -161,6 +162,24 @@ const Index = () => {
                   onEventClick={handleEventClick}
                   onAddEvent={handleAddEvent}
                   onMoveEvent={handleMoveEvent}
+                  onToggleCompleted={toggleEventCompleted}
+                />
+              </motion.div>
+              
+              {/* Mobile Events List */}
+              <motion.div
+                initial={{ y: 50, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ duration: 0.4, delay: 0.2 }}
+                className="block lg:hidden"
+              >
+                <EventsSidebar
+                  events={events}
+                  onEventClick={handleEventClick}
+                  onAddEvent={handleAddEvent}
+                  onMoveEvent={handleMoveEvent}
+                  onToggleCompleted={toggleEventCompleted}
+                  className="w-full border-l-0 border-t"
                 />
               </motion.div>
             </div>

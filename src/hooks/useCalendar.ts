@@ -43,7 +43,8 @@ export const useCalendar = () => {
         description: event.description,
         dueDate: new Date(event.due_date),
         plannedDate: new Date(event.planned_date),
-        color: event.color as EventColor
+        color: event.color as EventColor,
+        completed: event.completed || false
       }));
 
       setEvents(mappedEvents);
@@ -106,6 +107,26 @@ export const useCalendar = () => {
     return eachDayOfInterval({ start: calendarStart, end: calendarEnd });
   }, [currentDate, view]);
 
+  const toggleEventCompleted = async (id: string) => {
+    const eventToUpdate = events.find(e => e.id === id);
+    if (!eventToUpdate) return;
+
+    const updatedEvent = { ...eventToUpdate, completed: !eventToUpdate.completed };
+    
+    try {
+      const { error } = await supabase
+        .from('calendar_events')
+        .update({ completed: updatedEvent.completed })
+        .eq('id', id);
+
+      if (error) throw error;
+
+      setEvents(prev => prev.map(e => e.id === id ? updatedEvent : e));
+    } catch (error) {
+      console.error('Error updating event completion:', error);
+    }
+  };
+
   const addEvent = async (event: Omit<CalendarEvent, 'id'>) => {
     try {
       const { data, error } = await supabase
@@ -115,7 +136,8 @@ export const useCalendar = () => {
           description: event.description,
           due_date: event.dueDate.toISOString(),
           planned_date: event.plannedDate.toISOString(),
-          color: event.color
+          color: event.color,
+          completed: event.completed || false
         }])
         .select()
         .single();
@@ -128,7 +150,8 @@ export const useCalendar = () => {
         description: data.description,
         dueDate: new Date(data.due_date),
         plannedDate: new Date(data.planned_date),
-        color: data.color as EventColor
+        color: data.color as EventColor,
+        completed: data.completed || false
       };
 
       setEvents(prev => [...prev, newEvent]);
@@ -154,6 +177,7 @@ export const useCalendar = () => {
       if (updates.dueDate !== undefined) updateData.due_date = updates.dueDate.toISOString();
       if (updates.plannedDate !== undefined) updateData.planned_date = updates.plannedDate.toISOString();
       if (updates.color !== undefined) updateData.color = updates.color;
+      if (updates.completed !== undefined) updateData.completed = updates.completed;
 
       const { error } = await supabase
         .from('calendar_events')
@@ -237,6 +261,7 @@ export const useCalendar = () => {
     addEvent,
     updateEvent,
     deleteEvent,
+    toggleEventCompleted,
     getEventsForDay,
     navigateDate,
     goToToday,
