@@ -81,7 +81,15 @@ function MindMapCanvasInner() {
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if ((e.key === 'Delete' || e.key === 'Backspace') && selectedNode) {
+      // Don't delete node if user is currently editing text (input/textarea focused)
+      const activeElement = document.activeElement as HTMLElement;
+      const isEditingText = activeElement && (
+        activeElement.tagName === 'INPUT' || 
+        activeElement.tagName === 'TEXTAREA' ||
+        activeElement.contentEditable === 'true'
+      );
+      
+      if ((e.key === 'Delete' || e.key === 'Backspace') && selectedNode && !isEditingText) {
         deleteNode(selectedNode);
       }
     };
