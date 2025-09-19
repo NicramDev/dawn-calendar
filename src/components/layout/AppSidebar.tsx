@@ -1,9 +1,10 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Calendar as CalendarIcon, Brain, Settings, LogOut } from 'lucide-react';
+import { X, Calendar as CalendarIcon, Brain, Settings, LogOut, Timer } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { AppTab } from '@/hooks/useAppState';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
+import { PomodoroTimer } from '@/components/pomodoro/PomodoroTimer';
 
 interface AppSidebarProps {
   isOpen: boolean;
@@ -86,8 +87,8 @@ export function AppSidebar({ isOpen, activeTab, onClose, onTabChange }: AppSideb
               </div>
 
               {/* Navigation */}
-              <nav className="flex-1 p-6">
-                <div className="space-y-2">
+              <nav className="flex-1 p-6 overflow-y-auto">
+                <div className="space-y-2 mb-6">
                   {tabs.map((tab, index) => {
                     const Icon = tab.icon;
                     const isActive = activeTab === tab.id;
@@ -133,6 +134,24 @@ export function AppSidebar({ isOpen, activeTab, onClose, onTabChange }: AppSideb
                     );
                   })}
                 </div>
+
+                {/* Pomodoro Timer Section */}
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.5 }}
+                  className="border-t border-sidebar-border pt-6"
+                >
+                  <div className="flex items-center space-x-2 mb-4 px-2">
+                    <Timer className="h-4 w-4 text-sidebar-foreground/70" />
+                    <h3 className="text-sm font-medium text-sidebar-foreground/70">
+                      Pomodoro Timer
+                    </h3>
+                  </div>
+                  <div className="bg-sidebar-accent/20 rounded-lg overflow-hidden">
+                    <PomodoroTimer />
+                  </div>
+                </motion.div>
               </nav>
 
               {/* Footer */}
