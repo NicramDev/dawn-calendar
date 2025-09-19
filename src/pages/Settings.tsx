@@ -4,10 +4,9 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Trash2, Download, Upload, Clock } from 'lucide-react';
+import { Trash2, Download, Upload } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { appConfig } from '@/config/app';
-import { supabase } from '@/integrations/supabase/client';
 
 const nodeColors = [
   { name: 'Niebieski', value: 'blue', color: 'bg-blue-500' },
@@ -19,82 +18,19 @@ const nodeColors = [
 
 export function Settings() {
   const [selectedNodeColor, setSelectedNodeColor] = useState('blue');
-  const [reminderHour, setReminderHour] = useState<number>(appConfig.reminderHour);
-  const [reminderMinute, setReminderMinute] = useState<number>(appConfig.reminderMinute);
 
-  // Load selected color and reminder settings on mount
+  // Load selected color on mount
   useEffect(() => {
     const saved = localStorage.getItem('selectedNodeColor');
     if (saved) {
       setSelectedNodeColor(saved);
     }
-    
-    // Load reminder settings from Supabase
-    loadReminderSettings();
   }, []);
-
-  const getSessionId = () => {
-    let sessionId = localStorage.getItem('session_id');
-    if (!sessionId) {
-      sessionId = 'session_' + Math.random().toString(36).substr(2, 9);
-      localStorage.setItem('session_id', sessionId);
-    }
-    return sessionId;
-  };
-
-  const loadReminderSettings = async () => {
-    try {
-      const sessionId = getSessionId();
-      const { data, error } = await supabase
-        .from('user_settings')
-        .select('reminder_hour, reminder_minute')
-        .eq('session_id', sessionId)
-        .single();
-      
-      if (error && error.code !== 'PGRST116') { // PGRST116 = no rows found
-        console.error('Error loading reminder settings:', error);
-        return;
-      }
-      
-      if (data) {
-        setReminderHour(data.reminder_hour);
-        setReminderMinute(data.reminder_minute);
-      }
-    } catch (error) {
-      console.error('Error loading reminder settings:', error);
-    }
-  };
-
-  const saveReminderSettings = async (hour: number, minute: number) => {
-    try {
-      const sessionId = getSessionId();
-      const { error } = await supabase
-        .from('user_settings')
-        .upsert({
-          session_id: sessionId,
-          reminder_hour: hour,
-          reminder_minute: minute
-        });
-      
-      if (error) {
-        console.error('Error saving reminder settings:', error);
-      } else {
-        console.log('Reminder settings saved successfully:', { hour, minute, sessionId });
-      }
-    } catch (error) {
-      console.error('Error saving reminder settings:', error);
-    }
-  };
 
   // Save selected color to localStorage when it changes
   useEffect(() => {
     localStorage.setItem('selectedNodeColor', selectedNodeColor);
   }, [selectedNodeColor]);
-
-  // Save reminder time to Supabase when it changes
-  useEffect(() => {
-    saveReminderSettings(reminderHour, reminderMinute);
-  }, [reminderHour, reminderMinute]);
   const handleExportData = () => {
     const data = {
       events: localStorage.getItem('calendar-events') || '[]',
@@ -193,42 +129,6 @@ export function Settings() {
           </CardContent>
         </Card>
 
-        {/* Notifications */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Clock className="h-5 w-5" />
-              Powiadomienia
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-3">
-              <Label>Godzina wysyłania przypomnień</Label>
-              <div className="flex items-center gap-2">
-                <Input 
-                  type="number" 
-                  min="0" 
-                  max="23" 
-                  value={reminderHour}
-                  onChange={(e) => setReminderHour(parseInt(e.target.value) || 0)}
-                  className="w-20"
-                />
-                <span className="text-muted-foreground">:</span>
-                <Input 
-                  type="number" 
-                  min="0" 
-                  max="59" 
-                  value={reminderMinute.toString().padStart(2, '0')}
-                  onChange={(e) => setReminderMinute(parseInt(e.target.value) || 0)}
-                  className="w-20"
-                />
-              </div>
-              <p className="text-xs text-muted-foreground">
-                Przypomnienia o zadaniach będą wysyłane na Discord codziennie o tej godzinie
-              </p>
-            </div>
-          </CardContent>
-        </Card>
 
         {/* Data Management */}
         <Card>
@@ -291,7 +191,6 @@ export function Settings() {
               <p>{appConfig.name} v{appConfig.version}</p>
               <p>{appConfig.description}</p>
               <p>Wszystkie dane są przechowywane lokalnie w Twojej przeglądarce</p>
-              <p className="text-xs">System przypomnień działa przez Discord webhook</p>
             </div>
           </CardContent>
         </Card>
